@@ -1,7 +1,7 @@
 // The student changes this check as each stage adds an attack to the same app.
 // Never return tokens, private keys, real names, or note bodies.
 export async function runAttackChecks(config) {
-  if (![1, 2, 3].includes(config.step)) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');
+  if (![1, 2, 3, 4].includes(config.step)) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');
   let app;
   try {
     app = new URL(config.publicAppUrl);
@@ -14,7 +14,7 @@ export async function runAttackChecks(config) {
   }
   if (typeof config.sampleMarker !== 'string' || !config.sampleMarker) throw new Error('가상 메모의 확인 표시를 넣어 주세요.');
   if (config.step === 2) return checkStep2(app, config);
-  if (config.step === 3) return checkStep3(app);
+  if (config.step >= 3) return checkStep3(app, config.step);
   const response = await fetch(new URL('/data.json', app), {
     redirect: 'error', signal: AbortSignal.timeout(10000),
   });
@@ -57,7 +57,7 @@ async function checkStep2(app, config) {
 }
 
 // 3단계: 로그인 없이 목록을 부르면 401/403 JSON으로 거부되는지 확인한다. 로그인한 A 계정의 흐름은 직접 확인한다.
-async function checkStep3(app) {
+async function checkStep3(app, step) {
   const get = (path) => fetch(new URL(path, app), { redirect: 'error', signal: AbortSignal.timeout(10000) });
   const old = await get('/data.json');
   const list = await get('/api/notes');
@@ -75,5 +75,7 @@ async function checkStep3(app) {
       observed: `비로그인 GET /api/notes: HTTP ${list.status}, JSON 오류 문구 ${jsonError ? '있음' : '없음'}${refused ? '' : ' (거부 실패)'}` },
     { attackId: 'login_note_flow', expected: 'A 로그인 뒤 메모 추가·수정·삭제 가능',
       observed: '미실행: 이 스크립트는 로그인 정보를 쓰지 않아 화면에서 직접 확인함' },
+    ...(step >= 4 ? [{ attackId: 'cross_owner_access', expected: 'B가 A의 메모를 읽기·수정·삭제하거나 소유자를 바꾸면 거부',
+      observed: '미실행: 이 스크립트는 로그인 정보를 쓰지 않아 A/B 두 창에서 직접 확인함' }] : []),
   ];
 }

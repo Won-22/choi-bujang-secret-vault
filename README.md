@@ -52,4 +52,12 @@
 
 로그인 없는 요청은 `401 {"error":"LOGIN_REQUIRED"}`입니다. 계정은 Supabase 대시보드 Authentication에서 만든 A 계정을 씁니다.
 
-**남은 약점:** 소유자 검사를 하지 않아, 로그인한 B가 A의 메모 id를 알면 읽고 고치고 지울 수 있습니다(4단계에서 막습니다). 2단계 이전의 공개 커밋·배포 이력과 `supabase/notes.sql`의 가상 메모 문장도 그대로입니다. 처음 넣은 가상 메모 네 건은 `owner_id`가 비어 있어 목록에 나오지 않습니다.
+**3단계 당시 약점:** 소유자 검사가 없어 로그인한 B가 A의 메모 id로 접근할 수 있었습니다(아래 4단계에서 API와 DB로 막음). 2단계 이전의 공개 커밋·배포 이력과 `supabase/notes.sql`의 가상 메모 문장은 그대로입니다.
+
+## 4단계: 로그인해도 내 자료만
+
+메모 읽기·수정·삭제 API는 검증된 토큰의 사용자 ID와 DB의 `owner_id`를 비교합니다. URL·본문의 `owner_id`는 믿지 않으며, 본문에 내 ID가 아닌 `owner_id`가 있으면 403으로 거부합니다. 남의 메모 `id`로 요청하면 존재 여부를 숨기려 404를 돌려줍니다. 추가할 때는 항상 검증된 ID를 `owner_id`로 저장합니다.
+
+DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, `authenticated`는 자기 행만 SELECT·INSERT·UPDATE·DELETE). 서버 함수는 서버 전용 키(`service_role`)로 접근해 RLS를 우회하므로, 접근 제어의 실제 방어선은 API의 소유자 비교입니다. 적용 전후 권한은 파일 안의 `information_schema.role_table_grants`·`has_table_privilege` 쿼리로 대조합니다.
+
+**남은 것:** 이 SQL을 Supabase에 적용했는지는 코드로 확인되지 않습니다. A/B 교차 접근은 화면·API로 직접 확인했는지 아래에 적습니다.

@@ -16,10 +16,10 @@ function build() {
     authenticate: (request) => verify(request.headers.authorization),
     db: {
       list: (owner) => notes().select(COLUMNS).eq('owner_id', owner).order('created_at'),
-      get: (id) => notes().select(COLUMNS).eq('id', id).maybeSingle(),
+      get: (id, owner) => notes().select(COLUMNS).eq('id', id).eq('owner_id', owner).maybeSingle(),
       insert: (row) => notes().insert(row).select(COLUMNS).single(),
-      update: (id, fields) => notes().update(fields).eq('id', id).select(COLUMNS).maybeSingle(),
-      remove: (id) => notes().delete().eq('id', id).select('id').maybeSingle(),
+      update: (id, owner, fields) => notes().update(fields).eq('id', id).eq('owner_id', owner).select(COLUMNS).maybeSingle(),
+      remove: (id, owner) => notes().delete().eq('id', id).eq('owner_id', owner).select('id').maybeSingle(),
     },
   });
 }

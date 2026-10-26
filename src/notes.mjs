@@ -17,6 +17,10 @@ function readFields(raw) {
   return { title: title.trim(), content: body };
 }
 
+// 본문에 owner_id가 있어도 믿지 않는다. 내 ID가 아니면(소유자 변경·남의 이름으로 추가 시도) 거부한다.
+const claimsOtherOwner = (raw, userId) => ['owner_id', 'ownerId', 'userId']
+  .some((key) => raw && typeof raw === 'object' && key in raw && raw[key] !== userId);
+
 // authenticate(request) → { userId } | null,  db → 메모 저장소(Supabase 서버 클라이언트를 감싼 것)
 export function notesApi({ authenticate, db }) {
   async function guard(request, response, methods) {
@@ -46,6 +50,7 @@ export function notesApi({ authenticate, db }) {
         const { data, error } = await db.list(user.userId);
         return error ? fail(response, error) : send(response, 200, data.map(show));
       }
+      if (claimsOtherOwner(request.body, user.userId)) return send(response, 403, { error: 'OWNER_MISMATCH' });
       const fields = readFields(request.body);
       const id = request.body?.id === undefined ? randomUUID() : request.body.id;
       if (!fields || typeof id !== 'string' || !UUID.test(id)) {
@@ -55,7 +60,7 @@ export function notesApi({ authenticate, db }) {
       return error ? fail(response, error) : send(response, 201, { id: data.id });
     },
 
-    // shortcut: 소유자 검사를 하지 않아 로그인한 누구나 id만 알면 읽고 고치고 지울 수 있음, 4단계에서 owner_id로 막기
+    // 남의 메모는 없는 것처럼 404로 답한다(존재 여부도 알려 주지 않음).
     async item(request, response) {
       const user = await guard(request, response, ['GET', 'PUT', 'DELETE']);
       if (!user) return;
@@ -63,13 +68,14 @@ export function notesApi({ authenticate, db }) {
       if (!UUID.test(id)) return send(response, 404, { error: 'NOT_FOUND' });
       let result;
       if (request.method === 'GET') {
-        result = await db.get(id);
+        result = await db.get(id, user.userId);
       } else if (request.method === 'PUT') {
+        if (claimsOtherOwner(request.body, user.userId)) return send(response, 403, { error: 'OWNER_MISMATCH' });
         const fields = readFields(request.body);
         if (!fields) return send(response, 400, { error: 'INVALID_NOTE' });
-        result = await db.update(id, fields);
+        result = await db.update(id, user.userId, fields);
       } else {
-        result = await db.remove(id);
+        result = await db.remove(id, user.userId);
       }
       if (result.error) return fail(response, result.error);
       if (!result.data) return send(response, 404, { error: 'NOT_FOUND' });

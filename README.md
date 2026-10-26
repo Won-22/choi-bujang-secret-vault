@@ -39,3 +39,17 @@
 **해소되지 않은 것:** 옛 공개 커밋(`4a162d0`)과 옛 배포에는 메모가 남아 있습니다. `supabase/notes.sql`도 공개 저장소에 가상 메모 문장을 담고 있습니다. 이 두 가지는 이번 단계로 지워지지 않았습니다.
 
 배포 확인(2단계): `/data.json` 404, `/api/notes`는 로그인 없이 가상 메모 네 건 응답, 화면 정상.
+
+## 3단계: 진짜 로그인
+
+화면은 Supabase Auth 이메일·비밀번호 로그인과 로그아웃을 쓰고(공식 SDK, 브라우저에는 공개용 publishable 키만 있음), 서버 API는 요청의 `Authorization: Bearer` 토큰을 `src/verify-login.mjs`로 검증합니다. 브라우저가 보낸 userId·role은 믿지 않고, 검증된 토큰의 사용자 ID만 `owner_id`로 저장합니다. 발급자 정보는 `aleph.config.json`의 `identityProvider`에 있습니다(비밀 키 제외).
+
+| 경로 | 동작 |
+|---|---|
+| `GET /api/notes` | 로그인한 사용자의 메모 배열 `[{id,title,body}]` |
+| `POST /api/notes` | `{id?,title,body}` → `{id}` (id는 UUID, 없으면 서버가 만듦) |
+| `GET·PUT·DELETE /api/notes/:id` | 한 건 `{id,title,body}`, 지운 뒤 GET은 404 |
+
+로그인 없는 요청은 `401 {"error":"LOGIN_REQUIRED"}`입니다. 계정은 Supabase 대시보드 Authentication에서 만든 A 계정을 씁니다.
+
+**남은 약점:** 소유자 검사를 하지 않아, 로그인한 B가 A의 메모 id를 알면 읽고 고치고 지울 수 있습니다(4단계에서 막습니다). 2단계 이전의 공개 커밋·배포 이력과 `supabase/notes.sql`의 가상 메모 문장도 그대로입니다. 처음 넣은 가상 메모 네 건은 `owner_id`가 비어 있어 목록에 나오지 않습니다.

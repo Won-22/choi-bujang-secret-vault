@@ -1,7 +1,7 @@
 // The student changes this check as each stage adds an attack to the same app.
 // Never return tokens, private keys, real names, or note bodies.
 export async function runAttackChecks(config) {
-  if (config.step !== 1 && config.step !== 2) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');
+  if (![1, 2, 3].includes(config.step)) throw new Error('이 단계의 공격 점검을 src/attack-check.mjs에 구현해 주세요.');
   let app;
   try {
     app = new URL(config.publicAppUrl);
@@ -14,6 +14,7 @@ export async function runAttackChecks(config) {
   }
   if (typeof config.sampleMarker !== 'string' || !config.sampleMarker) throw new Error('가상 메모의 확인 표시를 넣어 주세요.');
   if (config.step === 2) return checkStep2(app, config);
+  if (config.step === 3) return checkStep3(app);
   const response = await fetch(new URL('/data.json', app), {
     redirect: 'error', signal: AbortSignal.timeout(10000),
   });
@@ -52,5 +53,27 @@ async function checkStep2(app, config) {
       observed: `비로그인 /data.json: HTTP ${old.status}, 메모 ${oldCount}건` },
     { attackId: 'public_api_still_open', expected: '3단계 전이라 /api/notes는 아직 열려 있음(남은 약점)',
       observed: `비로그인 /api/notes: HTTP ${api.status}, 메모 ${apiCount}건 (표시: ${config.sampleMarker})` },
+  ];
+}
+
+// 3단계: 로그인 없이 목록을 부르면 401/403 JSON으로 거부되는지 확인한다. 로그인한 A 계정의 흐름은 직접 확인한다.
+async function checkStep3(app) {
+  const get = (path) => fetch(new URL(path, app), { redirect: 'error', signal: AbortSignal.timeout(10000) });
+  const old = await get('/data.json');
+  const list = await get('/api/notes');
+  let jsonError = false;
+  try {
+    jsonError = typeof (await list.json())?.error === 'string';
+  } catch {
+    // JSON이 아니면 거부 문구를 확인하지 못한 것이다.
+  }
+  const refused = [401, 403].includes(list.status) && jsonError;
+  return [
+    { attackId: 'static_data_json_gone', expected: '/data.json에 메모가 없거나 404',
+      observed: `비로그인 /data.json: HTTP ${old.status}` },
+    { attackId: 'anonymous_list_refused', expected: '로그인 없는 목록 요청은 401/403과 JSON 오류',
+      observed: `비로그인 GET /api/notes: HTTP ${list.status}, JSON 오류 문구 ${jsonError ? '있음' : '없음'}${refused ? '' : ' (거부 실패)'}` },
+    { attackId: 'login_note_flow', expected: 'A 로그인 뒤 메모 추가·수정·삭제 가능',
+      observed: '미실행: 이 스크립트는 로그인 정보를 쓰지 않아 화면에서 직접 확인함' },
   ];
 }

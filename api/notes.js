@@ -12,6 +12,7 @@ export default async function handler(request, response) {
   if (!url || !key) return response.status(500).json({ error: 'SERVER_NOT_CONFIGURED' });
   const { data, error } = await createClient(url, key, { auth: { persistSession: false } })
     .from('notes').select('title, content').order('created_at');
+  if (error) console.error('notes query failed:', error.code, error.message);
   if (error) return response.status(502).json({ error: 'NOTES_UNAVAILABLE' });
   return response.status(200).json({ notes: data });
 }

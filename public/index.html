@@ -51,17 +51,34 @@
     </section>
   </main>
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/+esm';
-    // 공개용 값이라 화면 코드에 넣어도 됩니다. 서버 전용 키는 절대 넣지 않습니다.
-    const SUPABASE_URL = 'https://dofbsvqmfxhdacaglxlw.supabase.co';
-    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_jkzJKpx6AXLH94Bm7eDYHQ_5plJhisd';
-    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    // 로그인과 모든 자료 요청은 이 사이트의 서버 함수(/api/...)만 부른다. 브라우저에는 Supabase 키가 없다.
     const $ = (id) => document.getElementById(id);
+    const KEY = 'vault.session';
     let session = null;
     let editing = null;
 
     const say = (text) => { $('error').textContent = text || ''; };
+    const store = (value) => {
+      try { value ? localStorage.setItem(KEY, JSON.stringify(value)) : localStorage.removeItem(KEY); } catch { /* 저장하지 못해도 이번 탭에서는 동작 */ }
+    };
+    const stored = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } };
+
+    async function sessionCall(method, body, token) {
+      const response = await fetch('/api/session', { method, cache: 'no-store',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: body ? JSON.stringify(body) : undefined });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message ?? `요청이 거부되었습니다 (${response.status})`);
+      return data;
+    }
+    async function fresh() {
+      if (session && session.expires_at - 60 < Date.now() / 1000) {
+        try { session = await sessionCall('PUT', { refresh_token: session.refresh_token }); store(session); } catch { setSession(null); }
+      }
+    }
     async function api(path, options = {}) {
+      await fresh();
+      if (!session) throw new Error('로그인이 필요합니다');
       const response = await fetch(path, { cache: 'no-store', ...options, headers: {
         Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' } });
       const data = await response.json().catch(() => ({}));
@@ -91,12 +108,13 @@
     const run = async (task) => { say(''); try { await task(); } catch (error) { say(error.message); } };
     function reset() { editing = null; $('editor').reset(); $('save').textContent = '추가'; $('cancel').hidden = true; }
 
-    function show(next) {
+    function setSession(next) {
       session = next;
+      store(next);
       $('login').hidden = !!session;
       $('vault').hidden = !session;
       if (session) {
-        $('who').textContent = `로그인: ${session.user.email}`;
+        $('who').textContent = `로그인: ${session.email}`;
         run(load);
       } else {
         $('notes').replaceChildren();
@@ -107,12 +125,19 @@
     $('login').onsubmit = (event) => {
       event.preventDefault();
       run(async () => {
-        const { error } = await supabase.auth.signInWithPassword({ email: $('email').value, password: $('password').value });
-        if (error) throw new Error(`로그인하지 못했습니다: ${error.message}`);
+        try {
+          setSession(await sessionCall('POST', { email: $('email').value, password: $('password').value }));
+        } catch (error) {
+          throw new Error(`로그인하지 못했습니다: ${error.message}`);
+        }
         $('password').value = '';
       });
     };
-    $('logout').onclick = () => run(async () => { await supabase.auth.signOut(); });
+    $('logout').onclick = () => run(async () => {
+      const token = session?.access_token;
+      setSession(null);
+      if (token) await sessionCall('DELETE', null, token).catch(() => {});
+    });
     $('cancel').onclick = reset;
     $('editor').onsubmit = (event) => {
       event.preventDefault();
@@ -123,8 +148,7 @@
         await load();
       });
     };
-    supabase.auth.onAuthStateChange((_event, next) => show(next));
-    show((await supabase.auth.getSession()).data.session);
+    setSession(stored());
   </script>
 </body>
 </html>

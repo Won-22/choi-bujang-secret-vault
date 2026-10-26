@@ -10,6 +10,8 @@ create table if not exists public.notes (
 alter table public.notes enable row level security;
 -- 정책을 만들지 않고 권한도 회수: anon·authenticated는 읽기 불가, 서버 전용 키만 접근
 revoke all on public.notes from anon, authenticated;
+-- 자동 노출을 끈 프로젝트에서도 서버 함수(서버 전용 키)는 읽을 수 있게 함
+grant select on public.notes to service_role;
 
 insert into public.notes (title, content)
 select v.title, v.content

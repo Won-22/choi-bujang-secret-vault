@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-02T08:04:11.420Z",
+  "generatedAt": "2026-11-02T08:06:59.469Z",
   "baseUrl": "https://choi-bujang-secret-vault-won-22.vercel.app",
   "inspectedCommit": "7bb778f03f47e2c4bb23372044c83571e2a6c994",
   "deployedStep": 12,
@@ -78,10 +78,10 @@
     }
   ],
   "summary": {
-    "통과": 42,
+    "통과": 56,
     "실패": 0,
     "직접 확인": 3,
-    "연결 미확인": 25,
+    "연결 미확인": 11,
     "미실행": 11,
     "total": 81
   },
@@ -1199,12 +1199,13 @@
       "request": "GET /api/notes (A 토큰, 쿠키 없음)",
       "expected": "HTTP 403 DEVICE_NOT_APPROVED",
       "actual": "HTTP 403 DEVICE_NOT_APPROVED",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "8ac32682-de2a-4a6d-bd2f-30c529b2129e",
-      "serverId": "icn1::iad1::ckth2-1793604126007-56b15c48fd28",
-      "checkedAt": "2026-11-02T07:22:06.200Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "feb321a7-8290-4dbb-8210-c93682a10b1c",
+      "serverId": "icn1::iad1::n2z49-1793606792457-c8482dfc4601",
+      "checkedAt": "2026-11-02T08:06:32.931Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 403"
     },
     {
       "id": "V02",
@@ -1215,12 +1216,13 @@
       "request": "GET /api/notes (A 토큰, 위조 쿠키)",
       "expected": "HTTP 403 DEVICE_NOT_APPROVED",
       "actual": "HTTP 403 DEVICE_NOT_APPROVED",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "933c8b8b-c8bb-48dc-b22c-d37b9db35ece",
-      "serverId": "icn1::iad1::qbg4x-1793604126241-1e8277d6f728",
-      "checkedAt": "2026-11-02T07:22:07.035Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "9371739c-614d-4c08-a383-ab89e769bd75",
+      "serverId": "icn1::iad1::qbg4x-1793606792963-44c02e9489d6",
+      "checkedAt": "2026-11-02T08:06:33.630Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 403"
     },
     {
       "id": "V03",
@@ -1231,12 +1233,13 @@
       "request": "GET /api/notes (A 토큰, 승인된 기기)",
       "expected": "HTTP 200",
       "actual": "HTTP 200",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "e38d871c-cd07-42b7-a6b9-4eff3f022acb",
-      "serverId": "icn1::iad1::nbcz8-1793604127076-e1ed9c30ba39",
-      "checkedAt": "2026-11-02T07:22:08.480Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "f07c5f29-6586-4e46-b239-811112556202",
+      "serverId": "icn1::iad1::8chcc-1793606793663-8b11716d5623",
+      "checkedAt": "2026-11-02T08:06:34.574Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 200"
     },
     {
       "id": "V10",
@@ -1247,12 +1250,13 @@
       "request": "POST /api/notes (A)",
       "expected": "HTTP 201",
       "actual": "HTTP 201",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "86669d9a-7347-4a8c-9974-d103ba139a38",
-      "serverId": "icn1::iad1::rks6p-1793604128521-7cbe05460db0",
-      "checkedAt": "2026-11-02T07:22:09.988Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "c56a5076-dc8b-42be-b0b4-88c120900229",
+      "serverId": "icn1::iad1::bqbrp-1793606794606-e7515632f2e9",
+      "checkedAt": "2026-11-02T08:06:35.903Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 201"
     },
     {
       "id": "V04",
@@ -1263,12 +1267,13 @@
       "request": "GET /api/notes/:id (B가 A의 id)",
       "expected": "HTTP 404",
       "actual": "HTTP 404 NOT_FOUND",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "419ef59a-7e93-4c92-8e8d-cf82a065cebc",
-      "serverId": "icn1::iad1::nbcz8-1793604130029-5eeb0102414e",
-      "checkedAt": "2026-11-02T07:22:11.670Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "2c3d1029-0a79-4188-8c1f-17b170df6f17",
+      "serverId": "icn1::iad1::bqbrp-1793606795936-fc6d0d374143",
+      "checkedAt": "2026-11-02T08:06:38.131Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 404"
     },
     {
       "id": "V05",
@@ -1279,12 +1284,13 @@
       "request": "PUT /api/notes/:id (B가 A의 id)",
       "expected": "HTTP 404",
       "actual": "HTTP 404 NOT_FOUND",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "3dd47c9e-4552-4799-97d7-7dfa0991e01e",
-      "serverId": "icn1::iad1::8jn8z-1793604131713-9017ae9f016b",
-      "checkedAt": "2026-11-02T07:22:12.773Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "924ca493-d6a5-46c9-8dc7-22b36811ff89",
+      "serverId": "icn1::iad1::bqbrp-1793606798166-ddcf4512f8fe",
+      "checkedAt": "2026-11-02T08:06:39.448Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 404"
     },
     {
       "id": "V06",
@@ -1295,12 +1301,13 @@
       "request": "DELETE /api/notes/:id (B가 A의 id)",
       "expected": "HTTP 404",
       "actual": "HTTP 404 NOT_FOUND",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "8f96be0b-0178-48ed-8b8c-72232fd82079",
-      "serverId": "icn1::iad1::8jn8z-1793604132817-7d47cec62132",
-      "checkedAt": "2026-11-02T07:22:13.809Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "de6a9617-8f02-4fe3-982e-ba10b8807b28",
+      "serverId": "icn1::iad1::bqbrp-1793606799481-f7edcd65b3d7",
+      "checkedAt": "2026-11-02T08:06:41.282Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 404"
     },
     {
       "id": "V07",
@@ -1311,12 +1318,13 @@
       "request": "GET /api/notes (B)",
       "expected": "HTTP 200이고 A의 id 없음",
       "actual": "HTTP 200",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "05e5c99f-6308-4620-90c6-51664a61fcc0",
-      "serverId": "icn1::iad1::8jn8z-1793604133850-aace0e027c48",
-      "checkedAt": "2026-11-02T07:22:15.364Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "ec9edbfd-e124-46d0-a511-0af7d2c43bd3",
+      "serverId": "icn1::iad1::bqbrp-1793606801314-e9127a570df4",
+      "checkedAt": "2026-11-02T08:06:43.060Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 200"
     },
     {
       "id": "V08",
@@ -1327,12 +1335,13 @@
       "request": "POST /api/notes (본문 owner_id=A)",
       "expected": "HTTP 403 OWNER_MISMATCH",
       "actual": "HTTP 403 OWNER_MISMATCH",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "5994c51f-cad1-45e1-98e7-af65be2ddcef",
-      "serverId": "icn1::iad1::8jn8z-1793604135403-b43f6588fac5",
-      "checkedAt": "2026-11-02T07:22:16.214Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "feede711-3ead-4cf9-b2ed-0a1c01d7397b",
+      "serverId": "icn1::iad1::bqbrp-1793606803091-55f379ac2985",
+      "checkedAt": "2026-11-02T08:06:44.073Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 403"
     },
     {
       "id": "V09",
@@ -1343,12 +1352,13 @@
       "request": "POST /api/notes (본문 role)",
       "expected": "HTTP 403 ROLE_NOT_TRUSTED",
       "actual": "HTTP 403 ROLE_NOT_TRUSTED",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "0ca5f91f-b59d-4a3d-8a2c-b8d1fc7d673d",
-      "serverId": "icn1::iad1::8jn8z-1793604136262-9bca8dd718e8",
-      "checkedAt": "2026-11-02T07:22:17.185Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "1a70dca7-f6fd-42df-bbe4-8932ad39072f",
+      "serverId": "icn1::iad1::bqbrp-1793606804101-292adf98d53c",
+      "checkedAt": "2026-11-02T08:06:45.534Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 403"
     },
     {
       "id": "V11",
@@ -1359,12 +1369,13 @@
       "request": "GET /api/notes/:id (A)",
       "expected": "HTTP 200",
       "actual": "HTTP 200",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "59d0d7b9-2839-4c2a-8e8a-a1581534e583",
-      "serverId": "icn1::iad1::8jn8z-1793604137227-4d8fcb1e1858",
-      "checkedAt": "2026-11-02T07:22:18.740Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "c0472acf-927f-49c2-bfc4-03373a4c7a63",
+      "serverId": "icn1::iad1::bqbrp-1793606805563-5dfb4ea2a603",
+      "checkedAt": "2026-11-02T08:06:46.462Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 200"
     },
     {
       "id": "V12",
@@ -1375,12 +1386,13 @@
       "request": "PUT /api/notes/:id (A)",
       "expected": "HTTP 200",
       "actual": "HTTP 200",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "f7bd8496-be52-4495-9295-46d758e0959d",
-      "serverId": "icn1::iad1::8jn8z-1793604138782-279a8bd8da27",
-      "checkedAt": "2026-11-02T07:22:19.507Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "2b9b4992-44fd-41ba-bbcb-8d33ab4e0fcb",
+      "serverId": "icn1::iad1::bqbrp-1793606806492-7bbf6c623713",
+      "checkedAt": "2026-11-02T08:06:47.514Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 200"
     },
     {
       "id": "V13",
@@ -1391,12 +1403,13 @@
       "request": "DELETE /api/notes/:id (A)",
       "expected": "HTTP 200",
       "actual": "HTTP 200",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "e4fc9127-4e95-4ffc-a413-5c989b3f147b",
-      "serverId": "icn1::iad1::8jn8z-1793604139546-2cf76c97ddb9",
-      "checkedAt": "2026-11-02T07:22:20.550Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "8b5884aa-9348-40c9-a58d-a40f28b2b274",
+      "serverId": "icn1::iad1::bqbrp-1793606807545-57f582ad0483",
+      "checkedAt": "2026-11-02T08:06:48.458Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 200"
     },
     {
       "id": "V14",
@@ -1407,12 +1420,13 @@
       "request": "GET /api/notes/:id (A, 삭제 뒤)",
       "expected": "HTTP 404",
       "actual": "HTTP 404 NOT_FOUND",
-      "status": "연결 미확인",
+      "status": "통과",
       "source": "live",
-      "requestId": "20f42e42-6ca0-44c2-a161-d650c35cd122",
-      "serverId": "icn1::iad1::8s8r5-1793604140589-ba08154f328b",
-      "checkedAt": "2026-11-02T07:22:21.217Z",
-      "note": "배포 커밋 023409f, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음) 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음"
+      "requestId": "77593e5d-454e-4b50-8ac7-7c5c06e0fd5b",
+      "serverId": "icn1::iad1::bqbrp-1793606808488-bf61804e38eb",
+      "checkedAt": "2026-11-02T08:06:49.700Z",
+      "note": "배포 커밋 0a5a5e6, 계정은 이 도구가 환경변수로 받아 로그인(값은 기록하지 않음)",
+      "serverObserved": "HTTP 404"
     }
   ]
 }

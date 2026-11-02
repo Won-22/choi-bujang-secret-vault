@@ -19,7 +19,8 @@ test('실측 기록은 통과, 실행하지 않은 시험은 미실행으로 따
 
 test('실행하지 않은 시험을 통과로 처리하거나 요약이 행과 다르면 거부한다', () => {
   assert.ok(validateReport(report([{ ...skipped, status: '통과' }])).length > 0);
-  assert.ok(validateReport(report([{ ...base, requestId: null }])).length > 0);
+  assert.ok(validateReport(report([{ ...base, source: 'live', requestId: null, serverObserved: 'HTTP 200', actual: 'HTTP 200' }])).length > 0);
+  assert.deepEqual(validateReport(report([{ ...base, requestId: null }])), []);
   assert.ok(validateReport(report([{ ...skipped, note: '' }])).length > 0);
   assert.ok(validateReport(report([{ ...base, source: 'manual' }])).length > 0);
   const wrong = report([base]);
@@ -81,4 +82,17 @@ test('서버 관측은 같은 요청의 실제 상태와 같을 때만 기록으
   assert.ok(validateReport({ ...ok, rows: [{ ...row, serverObserved: 'HTTP 200' }] }).length > 0);
   assert.ok(validateReport({ ...ok, rows: [{ ...row, serverObserved: 'bad' }] }).length > 0);
   assert.ok(validateReport({ ...ok, rows: [{ ...row, serverObserved: undefined }] }).length > 0);
+});
+
+test('서버 관측으로 연결을 확인하지 못한 실제 요청은 통과가 아니라 연결 미확인이고 따로 집계된다', () => {
+  const live = { ...base, id: 'L1', source: 'live', actual: 'HTTP 200', requestId: UUID };
+  assert.ok(validateReport(report([live])).some((p) => p.includes('통과로 표시할 수 없습니다')));
+  const unlinked = { ...live, status: '연결 미확인' };
+  assert.deepEqual(validateReport(report([unlinked])), []);
+  assert.ok(validateReport(report([{ ...unlinked, serverObserved: 'HTTP 200' }])).length > 0);
+  assert.ok(validateReport(report([{ ...unlinked, source: 'local' }])).length > 0);
+  assert.deepEqual(validateReport(report([{ ...live, serverObserved: 'HTTP 200' }])), []);
+  const html = renderOps(report([unlinked, live && { ...live, id: 'L2', serverObserved: 'HTTP 200' }]));
+  assert.match(html, /연결 미확인<b>1<\/b>/u);
+  assert.match(html, /실측 통과<b>1<\/b>/u);
 });

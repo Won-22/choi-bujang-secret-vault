@@ -1,6 +1,7 @@
 // 탈환 작전실: ops/report.json(npm run ops:report가 실제로 보낸 요청·실행한 시험의 기록)을 읽어 정적 화면을 만든다.
 // 화면은 기록에 있는 값만 보여 준다. 성공 문구를 만들어 내지 않고, 실행하지 않은 시험은 '미실행'으로 따로 센다. 메모 제목·본문은 기록에 넣지 않는다.
-export const STATUSES = ['통과', '실패', '직접 확인', '미실행'];
+// 연결 미확인: 실제로 보냈지만 서버 관측(서버가 같은 요청 ID를 같은 상태로 기록)으로 연결을 확인하지 못한 결과. 통과로 세지 않는다.
+export const STATUSES = ['통과', '실패', '직접 확인', '연결 미확인', '미실행'];
 const SOURCES = ['local', 'live', 'manual', 'not_run'];
 const KINDS = ['normal', 'forbidden', 'info'];
 const GROUPS = ['rules', 'detect', 'revocation', 'restore', 'api', 'app'];
@@ -37,7 +38,13 @@ export function validateReport(report, { requireAllSteps = false } = {}) {
     if (!KINDS.includes(row.kind) || !GROUPS.includes(row.group) || !STATUSES.includes(row.status) || !SOURCES.includes(row.source)) problems.push(`${where}: 분류 값이 맞지 않습니다.`);
     for (const key of ['name', 'request', 'expected', 'actual']) if (typeof row[key] !== 'string' || !row[key]) problems.push(`${where}: ${key}가 비어 있습니다.`);
     const measured = row.status === '통과' || row.status === '실패';
-    if (measured && (!['local', 'live'].includes(row.source) || !UUID.test(row.requestId ?? '') || !ISO.test(row.checkedAt ?? ''))) problems.push(`${where}: 실측 결과에는 실제 실행 출처·요청 ID·확인 시각이 필요합니다.`);
+    if (measured && !['local', 'live'].includes(row.source)) problems.push(`${where}: 실측 결과에는 실제 실행 출처가 필요합니다.`);
+    if (measured && !ISO.test(row.checkedAt ?? '')) problems.push(`${where}: 실측 결과에는 확인 시각이 필요합니다.`);
+    if (row.source === 'live' && (row.status === '통과' || row.status === '실패' || row.status === '연결 미확인') && !UUID.test(row.requestId ?? '')) problems.push(`${where}: 실제로 보낸 요청에는 요청 ID가 필요합니다.`);
+    if (row.requestId != null && !UUID.test(row.requestId)) problems.push(`${where}: 요청 ID 형식이 맞지 않습니다.`);
+    // 서버 관측으로 연결이 확인되지 않은 실측은 통과로 표시할 수 없다. 서버 요청이 아닌 로컬 시험(source local)은 요청 ID 없이도 기록한다.
+    if (row.source === 'live' && row.status === '통과' && row.serverObserved === undefined) problems.push(`${where}: 서버 관측으로 연결이 확인되지 않은 결과는 통과로 표시할 수 없습니다.`);
+    if (row.status === '연결 미확인' && (row.source !== 'live' || row.serverObserved !== undefined || !ISO.test(row.checkedAt ?? ''))) problems.push(`${where}: 연결 미확인은 보냈지만 서버 관측이 없는 실제 요청이어야 합니다.`);
     if (row.serverObserved !== undefined) {
       const seen = /^HTTP (\d{3})$/u.exec(row.serverObserved)?.[1];
       const code = /HTTP (\d{3})/u.exec(row.actual ?? '')?.[1];
@@ -65,7 +72,7 @@ export function validateReport(report, { requireAllSteps = false } = {}) {
 }
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/gu, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-const badge = (status) => `<span class="b ${{ 통과: 'ok', 실패: 'bad', '직접 확인': 'man', 미실행: 'skip' }[status]}">${esc(status)}</span>`;
+const badge = (status) => `<span class="b ${{ 통과: 'ok', 실패: 'bad', '직접 확인': 'man', '연결 미확인': 'unk', 미실행: 'skip' }[status]}">${esc(status)}</span>`;
 const PANELS = [
   ['rules', '판정기 규칙', '기기 등록·자원 구역·추가 확인 규칙에 가상 요청을 넣어 실제로 돌린 결과입니다.'],
   ['detect', '탐지 사건', '가상 조회 사건을 탐지 함수에 넣어 실제로 돌린 결과입니다.'],
@@ -89,7 +96,7 @@ export function renderOps(report) {
     const rows = report.rows.filter((r) => r.group === group);
     const c = countBy(rows);
     return `<section class="panel" id="${group}"><h2>${esc(title)}</h2><p>${esc(text)}</p>
-<p class="n">통과 ${c['통과']} · 실패 ${c['실패']} · 직접 확인 ${c['직접 확인']} · 미실행 ${c['미실행']} (전체 ${rows.length})</p>
+<p class="n">통과 ${c['통과']} · 실패 ${c['실패']} · 직접 확인 ${c['직접 확인']} · 연결 미확인 ${c['연결 미확인']} · 미실행 ${c['미실행']} (전체 ${rows.length})</p>
 <ul>${rows.map((r) => `<li>${badge(r.status)} 단계 ${r.step} ${esc(r.name)} — ${esc(r.actual)}</li>`).join('')}</ul></section>`;
   }).join('\n');
   return `<!doctype html>
@@ -109,7 +116,7 @@ h1{font-size:clamp(28px,6vw,42px);margin:8px 0}h2{margin:0 0 6px;font-size:20px}
 .sum div{border:1px solid #51667c;background:#1a2a3d;border-radius:12px;padding:12px 14px}.sum b{display:block;font-size:26px;color:#ecf4ff}
 .panel{border:1px solid #51667c;background:#142234;border-radius:14px;padding:16px;margin:14px 0}.panel ul{padding-left:18px;margin:8px 0 0}
 .n{color:#8ad8df;font-weight:700}.b{display:inline-block;border-radius:8px;padding:1px 8px;font-size:13px;font-weight:700;color:#0c1520}
-.ok{background:#8ad8df}.bad{background:#ff8a9a}.man{background:#f2d98a}.skip{background:#9aa9bb}
+.unk{background:#d9b38a}.ok{background:#8ad8df}.bad{background:#ff8a9a}.man{background:#f2d98a}.skip{background:#9aa9bb}
 .wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:980px;font-size:14px}th,td{border:1px solid #2f4258;padding:8px;vertical-align:top;text-align:left;color:#dbe8f7}th{background:#1a2a3d}small{color:#9fb3cb}
 </style>
 </head>
@@ -117,20 +124,21 @@ h1{font-size:clamp(28px,6vw,42px);margin:8px 0}h2{margin:0 0 6px;font-size:20px}
 <main>
 <div class="eyebrow">BYTE BACK · 12단계 탈환 작전실</div>
 <h1>탈환 작전실</h1>
-<p>이 화면의 수치는 <code>ops/report.json</code>의 기록을 그대로 센 값입니다. 통과는 <code>npm run ops:report</code>가 실제로 보낸 요청이나 실행한 시험의 결과이고, 직접 확인은 사용자가 화면에서 확인해 알려 준 기록이며, 미실행은 실행하지 않은 시험입니다. 가상 메모 본문은 기록에도 화면에도 없습니다.</p>
+<p>이 화면의 수치는 <code>ops/report.json</code>의 기록을 그대로 센 값입니다. 통과는 <code>npm run ops:report</code>가 실제로 보낸 요청이나 실행한 시험의 결과이고(서버 함수가 받은 요청은 서버 관측으로 같은 요청 ID·상태를 확인한 것만 통과, 확인하지 못한 것은 연결 미확인), 직접 확인은 사용자가 화면에서 확인해 알려 준 기록이며, 미실행은 실행하지 않은 시험입니다. 가상 메모 본문은 기록에도 화면에도 없습니다.</p>
 <div class="notice">이 화면의 문구를 심판 통과나 방어 성공의 근거로 쓰지 않습니다. 심판의 41종 공격 방어 판정은 심판이 따로 실행하며 이 기록에서는 미실행으로 둡니다.</div>
 <div class="sum">
 <div>전체 시험<b>${report.rows.length}</b></div>
 <div>실측 통과<b>${counts['통과']}</b></div>
 <div>실측 실패<b>${counts['실패']}</b></div>
 <div>직접 확인<b>${counts['직접 확인']}</b></div>
+<div>연결 미확인<b>${counts['연결 미확인']}</b></div>
 <div>미실행<b>${counts['미실행']}</b></div>
 </div>
 <p>기록 시각 ${esc(report.generatedAt)} · 확인한 주소 ${esc(report.baseUrl)} · 검사한 배포 커밋 <code>${esc(report.inspectedCommit)}</code>(<code>/aleph.json</code> 기준) · 단계 ${esc(report.deployedStep)} · 정책 사본 해시 <code>${esc(report.policySnapshotHash)}</code></p>
 ${panels}
 <h2>단계별 기록(1~12단계)</h2>
-<div class="wrap"><table style="min-width:520px"><thead><tr><th>단계</th><th>시험</th><th>통과</th><th>실패</th><th>직접 확인</th><th>미실행</th></tr></thead><tbody>
-${coverageBy(report.rows).map((c) => `<tr><td>${c.step}</td><td>${c.total}</td><td>${c['통과']}</td><td>${c['실패']}</td><td>${c['직접 확인']}</td><td>${c['미실행']}</td></tr>`).join('')}
+<div class="wrap"><table style="min-width:520px"><thead><tr><th>단계</th><th>시험</th><th>통과</th><th>실패</th><th>직접 확인</th><th>연결 미확인</th><th>미실행</th></tr></thead><tbody>
+${coverageBy(report.rows).map((c) => `<tr><td>${c.step}</td><td>${c.total}</td><td>${c['통과']}</td><td>${c['실패']}</td><td>${c['직접 확인']}</td><td>${c['연결 미확인']}</td><td>${c['미실행']}</td></tr>`).join('')}
 </tbody></table></div>
 <h2>자기 점검(attack-check) 원문</h2>
 <p>npm run bundle이 쓰는 점검과 같은 코드의 observed 원문입니다. 보고서에는 이 기록을 만든 실행의 값이 그대로 적혀 있습니다.</p>

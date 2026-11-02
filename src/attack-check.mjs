@@ -108,6 +108,7 @@ const notRun = (attackId, expected, why) => ({ attackId, expected, observed: `no
 async function checkStep3(app, step, config) {
   const ITEM = '33333333-3333-4333-8333-333333333333';
   const attempts = [
+    await anonymousGet(app, '/api/identity', 'deployment_identity_open', '1단계: 로그인 없는 GET /api/identity는 200과 저장소·커밋 식별을 돌려줌'),
     await anonymousGet(app, '/data.json', 'static_data_json_gone', '2단계: 로그인 없는 GET /data.json에 메모가 없거나 404'),
     await anonymousGet(app, '/api/notes', 'anonymous_list_refused', '3단계: 로그인 없는 GET /api/notes는 401/403과 JSON 오류'),
     await anonymousGet(app, '/api/session', 'anonymous_session_probe', '3단계: 로그인 없는 GET /api/session은 401/403/405로 거부(세션을 읽을 수 없음)'),

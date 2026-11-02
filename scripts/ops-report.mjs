@@ -32,7 +32,7 @@ async function live({ id, step, group = 'api', kind, name, method = 'GET', path,
     add({ id, step, group, kind, name, request, expected: `HTTP ${expectStatus}${expectError ? ` ${expectError}` : ''}${inspect ? ` + ${extra.expected}` : ''}`,
       actual: `HTTP ${res.status}${error ? ` ${error}` : ''}${extra.actual ? `, ${extra.actual}` : ''}`,
       status: ok ? '통과' : '실패', source: 'live', requestId, serverId: res.headers.get('x-vercel-id'), checkedAt, note });
-    return { res, text };
+    return { res, text, requestId };
   } catch (error) {
     add({ id, step, group, kind, name, request, expected: `HTTP ${expectStatus}`, actual: `요청 실패: ${error.cause?.code ?? error.message}`,
       status: '실패', source: 'live', requestId, checkedAt, note });
@@ -52,13 +52,13 @@ const home = await live({ id: 'L01', step: 1, kind: 'normal', name: '첫 화면�
 const html = home?.text ?? '';
 add({ id: 'L02', step: 11, group: 'app', kind: 'forbidden', name: '화면 코드에 브라우저 저장소·공개 키가 없다', request: 'GET / 의 HTML 검색',
   expected: 'localStorage·sessionStorage·sb_publishable 0건', actual: home ? `${(html.match(/localStorage|sessionStorage|sb_publishable|createClient/gu) ?? []).length}건` : '화면을 받지 못함',
-  status: home && !/localStorage|sessionStorage|sb_publishable|createClient/u.test(html) ? '통과' : '실패', source: 'live', requestId: randomUUID(), serverId: home?.res.headers.get('x-vercel-id') ?? null, checkedAt: now(), note: 'L01에서 받은 화면을 검색한 결과' });
+  status: home && !/localStorage|sessionStorage|sb_publishable|createClient/u.test(html) ? '통과' : '실패', source: 'live', requestId: home?.requestId ?? null, serverId: home?.res.headers.get('x-vercel-id') ?? null, checkedAt: now(), note: 'L01에서 받은 화면을 검색한 결과(새 요청 없음, L01의 요청 ID)' });
 add({ id: 'L03', step: 11, group: 'app', kind: 'normal', name: '화면이 설치형 웹앱 설정을 연결한다', request: 'GET / 의 HTML 검색',
   expected: 'rel="manifest" 연결 있음', actual: /rel="manifest"/u.test(html) ? '연결 있음' : '연결 없음',
-  status: /rel="manifest"/u.test(html) ? '통과' : '실패', source: 'live', requestId: randomUUID(), serverId: home?.res.headers.get('x-vercel-id') ?? null, checkedAt: now(), note: 'L01에서 받은 화면을 검색한 결과' });
+  status: /rel="manifest"/u.test(html) ? '통과' : '실패', source: 'live', requestId: home?.requestId ?? null, serverId: home?.res.headers.get('x-vercel-id') ?? null, checkedAt: now(), note: 'L01에서 받은 화면을 검색한 결과(새 요청 없음, L01의 요청 ID)' });
 add({ id: 'L04', step: 1, group: 'api', kind: 'normal', name: '첫 화면 응답에 보안 헤더가 있다', request: 'GET / 의 응답 헤더',
   expected: 'X-Content-Type-Options: nosniff', actual: home?.res.headers.get('x-content-type-options') ?? '헤더 없음',
-  status: home?.res.headers.get('x-content-type-options') === 'nosniff' ? '통과' : '실패', source: 'live', requestId: randomUUID(), serverId: home?.res.headers.get('x-vercel-id') ?? null, checkedAt: now(), note: 'L01 응답의 헤더' });
+  status: home?.res.headers.get('x-content-type-options') === 'nosniff' ? '통과' : '실패', source: 'live', requestId: home?.requestId ?? null, serverId: home?.res.headers.get('x-vercel-id') ?? null, checkedAt: now(), note: 'L01 응답의 헤더(새 요청 없음, L01의 요청 ID)' });
 await live({ id: 'L05', step: 2, kind: 'forbidden', name: '옛 공개 자료 파일은 사라졌다', path: '/data.json', expectStatus: 404 });
 await live({ id: 'L21', step: 2, kind: 'forbidden', name: '옛 공개 자료 주소에 가상 메모 문장이 없다', path: '/data.json', expectStatus: 404,
   inspect: (_res, text) => ({ ok: !/실습용 가상|SAMPLE_NOTE/u.test(text), expected: '가상 메모 문장 0건', actual: `가상 메모 문장 ${(text.match(/실습용 가상|SAMPLE_NOTE/gu) ?? []).length}건` }) });
@@ -105,12 +105,12 @@ for (const item of evidence) {
   const id = /request_id=([0-9a-f-]{36})/u.exec(item.observed)?.[1] ?? null;
   const code = /HTTP (\d{3})/u.exec(item.observed)?.[1] ?? null;
   const seen = /server_observed=(\d{3})/u.exec(item.observed)?.[1] ?? null;
-  const expectedCode = { static_data_json_gone: ['404'], anonymous_list_refused: ['401', '403'], anonymous_item_refused: ['401', '403'], anonymous_device_refused: ['401', '403'], anonymous_session_probe: ['401', '403', '405'], original_api_direct: ['401', '403'] }[item.attackId];
+  const expectedCode = { static_data_json_gone: ['404'], anonymous_list_refused: ['401', '403'], anonymous_item_refused: ['401', '403'], anonymous_device_refused: ['401', '403'], anonymous_session_probe: ['401', '403', '405'], deployment_identity_open: ['200'], original_api_direct: ['401', '403'] }[item.attackId];
   const sent = Boolean(id && code);
   const stepOf = Number(/^(\d+)단계/u.exec(item.expected)?.[1] ?? 12);
   const row = { attackId: item.attackId, id: `A${String(rows.filter((r) => r.attackId).length + 1).padStart(2, '0')}`, step: stepOf, group: 'api', kind: 'forbidden',
     name: `자기 점검 ${item.attackId}`, request: 'src/attack-check.mjs의 runAttackChecks', expected: item.expected,
-    actual: sent ? `HTTP ${code}` : '미실행', status: !sent ? '미실행' : expectedCode?.includes(code) ? '통과' : '실패', source: sent ? 'live' : 'not_run',
+    actual: sent ? `HTTP ${code}` : '미실행', status: !sent ? '미실행' : !expectedCode?.includes(code) ? '실패' : seen ? '통과' : '연결 미확인', source: sent ? 'live' : 'not_run',
     requestId: sent ? id : null, checkedAt: sent ? now() : null, note: sent ? '번들이 쓰는 점검과 같은 코드, observed 원문은 attackEvidence에 있음' : item.observed.replace(/^not_run\(미실행\):\s*/u, '').replace(/^not_run:\s*/u, '') };
   if (sent && seen) row.serverObserved = `HTTP ${seen}`;
   add(row);
@@ -186,10 +186,10 @@ for (const [index, [name, events, expected, kind]] of cases.entries()) {
   const actual = result.action === 'observe' ? 'observe' : `${result.action} ${result.reasonCode} ${result.subject}`;
   if (result.action === 'propose_revocation') proposals += 1;
   add({ id: `T${String(index + 1).padStart(2, '0')}`, step: 9, group: 'detect', kind, name, request: `가상 조회 사건 ${events.length}건`, expected, actual,
-    status: actual === expected ? '통과' : '실패', source: 'local', requestId: randomUUID(), checkedAt: now(), note: '가상 사건, 심판 판정 아님' });
+    status: actual === expected ? '통과' : '실패', source: 'local', requestId: null, checkedAt: now(), note: '가상 사건, 심판 판정 아님' });
 }
 add({ id: 'R01', step: 9, group: 'revocation', kind: 'info', name: '탐지가 회수를 제안한 가상 묶음 수', request: `T01~T06 중 propose_revocation`, expected: '2건(121건·200건 묶음)',
-  actual: `${proposals}건`, status: proposals === 2 ? '통과' : '실패', source: 'local', requestId: randomUUID(), checkedAt: now(), note: '제안만 세었고 실제 접속 회수는 아님' });
+  actual: `${proposals}건`, status: proposals === 2 ? '통과' : '실패', source: 'local', requestId: null, checkedAt: now(), note: '제안만 세었고 실제 접속 회수는 아님' });
 skip('R02', 9, 'revocation', '실제 접속 회수 집행', '엔진이 사건을 전달하고 회수를 집행', '제안 뒤 해당 사용자의 접속이 실제로 끊김', '회수는 제공 엔진(ALEPH SDP)의 몫이며 이 저장소의 앱은 detect를 호출하지 않아 실행할 수 없습니다.', 'forbidden');
 
 // ── 정책 사본·복원: 실제 도구로 운영 정책 확인, 임시 복사본에서 침공·복원 시험 ─────────────────
@@ -200,10 +200,10 @@ try {
   snapshotHash = hash;
   const diffs = diffPolicy(items, collectPolicy(root));
   add({ id: 'P01', step: 10, group: 'restore', kind: 'normal', name: '운영 정책이 검증한 사본과 같다', request: 'npm run policy -- verify', expected: '차이 0건', actual: `차이 ${diffs.length}건`,
-    status: diffs.length === 0 ? '통과' : '실패', source: 'local', requestId: randomUUID(), checkedAt: now(), note: `사본 해시 ${hash.slice(0, 12)}…` });
+    status: diffs.length === 0 ? '통과' : '실패', source: 'local', requestId: null, checkedAt: now(), note: `사본 해시 ${hash.slice(0, 12)}…` });
 } catch (error) {
   add({ id: 'P01', step: 10, group: 'restore', kind: 'normal', name: '운영 정책이 검증한 사본과 같다', request: 'npm run policy -- verify', expected: '차이 0건', actual: error.message,
-    status: '실패', source: 'local', requestId: randomUUID(), checkedAt: now(), note: '' });
+    status: '실패', source: 'local', requestId: null, checkedAt: now(), note: '' });
 }
 {
   const temp = mkdtempSync(join(tmpdir(), 'ops-policy-'));
@@ -220,10 +220,10 @@ try {
     actual = `바뀐 항목 ${planned}, 복원 뒤 남은 차이 ${done.remaining.length}건, 보존 ${done.kept.join(',')}`;
     add({ id: 'P02', step: 10, group: 'restore', kind: 'forbidden', name: '시험 정책의 규칙 한 줄 변조를 사본으로 되돌린다', request: '임시 복사본에서 snapshot→simulate→diff→restore --apply',
       expected: '바뀐 항목 src/decider.mjs, 남은 차이 0건, 다른 항목 보존', actual,
-      status: planned === 'src/decider.mjs' && done.remaining.length === 0 && done.kept.includes('other-service/rules') ? '통과' : '실패', source: 'local', requestId: randomUUID(), checkedAt: now(), note: '운영 정책 파일은 건드리지 않음' });
+      status: planned === 'src/decider.mjs' && done.remaining.length === 0 && done.kept.includes('other-service/rules') ? '통과' : '실패', source: 'local', requestId: null, checkedAt: now(), note: '운영 정책 파일은 건드리지 않음' });
   } catch (error) {
     add({ id: 'P02', step: 10, group: 'restore', kind: 'forbidden', name: '시험 정책의 규칙 한 줄 변조를 사본으로 되돌린다', request: '임시 복사본에서 snapshot→simulate→diff→restore --apply',
-      expected: '바뀐 항목 src/decider.mjs, 남은 차이 0건, 다른 항목 보존', actual: error.message, status: '실패', source: 'local', requestId: randomUUID(), checkedAt: now(), note: '' });
+      expected: '바뀐 항목 src/decider.mjs, 남은 차이 0건, 다른 항목 보존', actual: error.message, status: '실패', source: 'local', requestId: null, checkedAt: now(), note: '' });
   }
 }
 {
@@ -231,7 +231,7 @@ try {
   const pass = Number(/ℹ pass (\d+)/u.exec(run.stdout)?.[1] ?? NaN);
   const fail = Number(/ℹ fail (\d+)/u.exec(run.stdout)?.[1] ?? NaN);
   add({ id: 'U01', step: 12, group: 'api', kind: 'normal', name: '저장소의 자동 시험 전체(소유자·역할·판정기·복원·기기 확인)', request: 'node --test test/', expected: '실패 0건',
-    actual: Number.isNaN(pass) ? '결과를 읽지 못함' : `통과 ${pass}건, 실패 ${fail}건`, status: fail === 0 && pass > 0 ? '통과' : '실패', source: 'local', requestId: randomUUID(), checkedAt: now(), note: '가짜 DB를 쓰는 로컬 시험, 실제 배포 시험 아님' });
+    actual: Number.isNaN(pass) ? '결과를 읽지 못함' : `통과 ${pass}건, 실패 ${fail}건`, status: fail === 0 && pass > 0 ? '통과' : '실패', source: 'local', requestId: null, checkedAt: now(), note: '가짜 DB를 쓰는 로컬 시험, 실제 배포 시험 아님' });
 }
 
 // ── 사용자가 화면에서 직접 확인해 알려 준 기록 / 실행하지 않은 시험 ─────────────────────────────
@@ -255,6 +255,18 @@ try {
     }
   }
 } catch { /* 이전 기록이 없으면 그대로 진행 */ }
+
+// 서버 관측으로 연결을 확인하지 못한 실제 요청은 통과로 세지 않는다(정적 파일이거나 서버 함수를 거치지 않은 요청, 또는 서버 관측 표가 생기기 전에 실행한 시험).
+function demoteUnlinked() {
+  for (const row of rows) {
+    if (row.source === 'live' && row.status === '통과' && !row.serverObserved) {
+      row.status = '연결 미확인';
+      row.note = `${row.note} 서버 관측으로 같은 요청 ID를 확인하지 못해 통과로 세지 않음`.trim();
+    }
+  }
+}
+
+demoteUnlinked();
 
 const report = {
   version: 1, generatedAt: now(), baseUrl: BASE,

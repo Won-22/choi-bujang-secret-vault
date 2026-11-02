@@ -108,9 +108,29 @@ if (pending.length) {
   }
 }
 
+// 서버 관측 대조: 서버가 같은 요청 ID를 같은 상태로 기록했는지 /api/observed로 확인해 행에 적는다(확인하지 못하면 적지 않는다).
+async function serverSaw(requestId) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const r = await call({ path: `/api/observed?request_id=${requestId}` });
+    const first = r.data?.observations?.[0];
+    if (first) return first.status;
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+  return null;
+}
+for (const row of rows) {
+  if (row.source !== 'live' || !row.requestId) continue;
+  const status = await serverSaw(row.requestId);
+  const code = Number(/HTTP (\d{3})/u.exec(row.actual)?.[1]);
+  if (status === null) continue;
+  row.serverObserved = `HTTP ${status}`;
+  if (status !== code) { row.status = '실패'; row.note = `${row.note} 서버 관측 ${status}과 받은 상태 ${code}가 다름`.trim(); }
+}
+
 const base = JSON.parse(readFileSync(reportPath, 'utf8'));
 // 승인된 기기에서 전체 흐름을 실측했을 때만 옛 미실행 항목(N01·N02·N04)을 지운다. 승인 대기면 V01·V02만 더하고 옛 항목은 그대로 둔다.
 const replace = pending.length ? [] : ['N01', 'N02', 'N04'];
+for (const row of rows) if (row.source === 'live' && row.status === '통과' && !row.serverObserved) row.status = '연결 미확인';
 const merged = mergeRows(base, replace, rows);
 merged.generatedAt = now();
 const problems = validateReport(merged);

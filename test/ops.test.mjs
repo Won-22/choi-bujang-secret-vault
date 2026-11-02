@@ -54,12 +54,13 @@ test('로그인 시험 결과를 합치면 옛 미실행 행이 빠지고 수치
   assert.equal(merged.summary['실패'], 1);
 });
 
-test('점검 요청 ID는 점검마다 고정되고 서로 다르며 UUID v5 모양이다', async () => {
+test('점검 요청 ID는 점검마다 고정되고 서로 다르며 UUID(버전 8) 모양이다', async () => {
   const { checkRequestId } = await import('../src/attack-check.mjs');
   const a = checkRequestId('static_data_json_gone');
   assert.equal(a, checkRequestId('static_data_json_gone'));
   assert.notEqual(a, checkRequestId('anonymous_list_refused'));
-  assert.match(a, /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u);
+  assert.ok(!/sha1/iu.test(readFileSync(new URL('../src/attack-check.mjs', import.meta.url), 'utf8').replace(/SHA-1/g, '')), '점검 코드에 SHA-1이 없다');
+  assert.match(a, /^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u);
 });
 
 test('점검 원문(observed)과 보고서 행의 요청 ID·상태가 다르면 거부한다', () => {

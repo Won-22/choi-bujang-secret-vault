@@ -1,20 +1,20 @@
 import { createHash } from 'node:crypto';
 
-// 점검마다 고정된 요청 ID(이름 기반 UUID v5). 번들·보고서(ops/report.json)·심판이 같은 점검을 같은 ID로 볼 수 있다. 점검끼리는 서로 다른 ID다.
-const NAMESPACE = Buffer.from('6ba7b8109dad11d180b400c04fd430c8', 'hex');
+// 점검마다 고정된 요청 ID. 이름에서 SHA-256으로 만든 UUID(버전 8, 이름 기반)다. 격리 환경에서 허용되지 않는 SHA-1은 쓰지 않는다.
+// 번들·보고서(ops/report.json)·심판이 같은 점검을 같은 ID로 볼 수 있고, 점검끼리는 서로 다른 ID다.
 export function checkRequestId(name) {
-  const bytes = createHash('sha1').update(NAMESPACE).update(`aleph-defense-check:${name}`).digest().subarray(0, 16);
-  bytes[6] = (bytes[6] & 0x0f) | 0x50;
+  const bytes = createHash('sha256').update(`aleph-defense-check:${name}`).digest().subarray(0, 16);
+  bytes[6] = (bytes[6] & 0x0f) | 0x80;
   bytes[8] = (bytes[8] & 0x3f) | 0x80;
   const hex = bytes.toString('hex');
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 // 보내는 GET마다 요청 ID(x-request-id)를 붙이고, 실제로 받은 HTTP 상태와 같은 ID를 observed에 적는다.
-// 응답을 받지 못했거나 보내지 않은 점검은 상태와 ID를 지어내지 않고 not_run(미실행)으로 적는다.
+// 요청 ID를 만들지 못했거나 응답을 받지 못했거나 보내지 않은 점검은 상태와 ID를 지어내지 않고 not_run(미실행)으로 적는다.
 async function sendGet(url, headers = {}, name = 'check') {
-  const requestId = checkRequestId(name);
   try {
+    const requestId = checkRequestId(name);
     const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId, 'x-aleph-request-id': requestId },
       redirect: 'error', signal: AbortSignal.timeout(10000) });
     return { response, status: response.status, requestId, sent: true, tag: `HTTP ${response.status}, request_id=${requestId}` };

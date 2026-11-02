@@ -144,3 +144,5 @@ DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, 
 실행하지 않은 시험은 미실행으로 남기며 결과를 꾸미지 않았습니다.
 
 **복원 시험 결과(직접 실행):** 시험 계정 B로 로그인한 화면의 Console에서 `POST /api/backup/restore`를 보낸 응답이 `restored: true`, `idMatches: true`, `ownerMatches: true`, `hashMatches: true`였습니다(대상 ID는 위 한 건). 다른 메모와 A 계정은 건드리지 않았습니다. 화면 새로고침 뒤 메모 복귀와 A 화면 확인, 6·7번 재확인은 별도로 기록하지 않았으므로 미실행으로 남깁니다.
+
+`aleph.config.json`의 `restoreRoute`에 복원 경로 `POST /api/backup/restore`(서비스 `backup`)를 등록했습니다. `allowedRoutes`와 다른 설정은 바꾸지 않았습니다.

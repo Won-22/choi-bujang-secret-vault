@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BYTE BACK | 점령된 자료실</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#101a28">
+  <link rel="icon" href="/icon-192.png">
   <style>
     :root { color-scheme: dark; font-family: system-ui, sans-serif; }
     body { margin: 0; min-height: 100vh; background: #101a28; color: #ecf4ff; }
@@ -28,10 +31,11 @@
 </head>
 <body>
   <main>
-    <div class="eyebrow">BYTE BACK · 4단계 내 자료만</div>
+    <div class="eyebrow">BYTE BACK · 11단계 나만의 접속 앱</div>
     <h1>점령된 자료실</h1>
     <p>로그인해야 메모를 볼 수 있습니다. 아래 기록은 모두 실습을 위해 만든 가상 자료입니다.</p>
     <div class="notice">서버가 로그인한 사용자의 메모만 읽고 고치게 합니다. 다른 사람의 메모는 보이지 않습니다.</div>
+    <p class="notice" id="offline" hidden>오프라인입니다. 저장된 화면만 보이며, 메모는 인터넷에 연결되어 서버가 확인해야 볼 수 있습니다.</p>
     <p class="error" id="error" role="alert"></p>
 
     <form id="login" hidden>
@@ -42,12 +46,18 @@
 
     <section id="vault" hidden>
       <div class="bar"><span id="who"></span><button class="quiet" id="logout" type="button">로그아웃</button></div>
+      <div id="device" hidden>
+        <p id="deviceText"></p>
+        <div class="row"><button type="button" id="deviceAsk">이 기기 승인 요청</button><button type="button" class="quiet" id="deviceRefresh">상태 새로고침</button></div>
+      </div>
+      <div id="vaultBody" hidden>
       <form id="editor">
         <input id="title" placeholder="제목" maxlength="200" required>
         <textarea id="body" placeholder="내용" rows="3" maxlength="5000"></textarea>
         <div class="row"><button type="submit" id="save">추가</button><button type="button" class="quiet" id="cancel" hidden>취소</button></div>
       </form>
       <ul id="notes" aria-live="polite"></ul>
+      </div>
     </section>
   </main>
   <script type="module">
@@ -106,6 +116,26 @@
     }
     const load = async () => draw(await api('/api/notes'));
     const run = async (task) => { say(''); try { await task(); } catch (error) { say(error.message); } };
+    const deviceCall = async (method) => {
+      await fresh();
+      if (!session) throw new Error('로그인이 필요합니다');
+      const response = await fetch('/api/device', { method, cache: 'no-store', headers: { Authorization: `Bearer ${session.access_token}` } });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(`기기 확인이 거부되었습니다 (${response.status} ${data.error ?? ''})`);
+      return data;
+    };
+    // 서버가 이 기기를 승인(approved)으로 확인했을 때만 메모 화면을 연다. 설치했다는 표시나 버튼만으로는 열리지 않는다.
+    function showDevice({ status, deviceId }) {
+      const approved = status === 'approved';
+      $('vaultBody').hidden = !approved;
+      $('device').hidden = approved;
+      $('deviceAsk').hidden = status !== 'none';
+      $('deviceText').textContent = status === 'pending'
+        ? `승인 대기 중입니다. 서버가 이 기기를 등록 기기로 확인하기 전에는 자료를 표시하지 않습니다. 요청 번호: ${deviceId}`
+        : '이 기기는 아직 승인되지 않았습니다. 승인을 요청하면 서버에 대기 요청이 만들어지며, 서버에서 승인되어야 자료가 열립니다.';
+      if (approved) run(load);
+    }
+    const checkDevice = (method) => run(async () => showDevice(await deviceCall(method)));
     function reset() { editing = null; $('editor').reset(); $('save').textContent = '추가'; $('cancel').hidden = true; }
 
     function setSession(next) {
@@ -115,8 +145,10 @@
       $('vault').hidden = !session;
       if (session) {
         $('who').textContent = `로그인: ${session.email}`;
-        run(load);
+        checkDevice('GET');
       } else {
+        $('vaultBody').hidden = true;
+        $('device').hidden = true;
         $('notes').replaceChildren();
         reset();
       }
@@ -139,6 +171,13 @@
       if (token) await sessionCall('DELETE', null, token).catch(() => {});
     });
     $('cancel').onclick = reset;
+    $('deviceAsk').onclick = () => checkDevice('POST');
+    $('deviceRefresh').onclick = () => checkDevice('GET');
+    const online = () => { $('offline').hidden = navigator.onLine; };
+    addEventListener('online', online);
+    addEventListener('offline', online);
+    online();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
     $('editor').onsubmit = (event) => {
       event.preventDefault();
       run(async () => {

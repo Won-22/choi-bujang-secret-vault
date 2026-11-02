@@ -146,3 +146,14 @@ DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, 
 **복원 시험 결과(직접 실행):** 시험 계정 B로 로그인한 화면의 Console에서 `POST /api/backup/restore`를 보낸 응답이 `restored: true`, `idMatches: true`, `ownerMatches: true`, `hashMatches: true`였습니다(대상 ID는 위 한 건). 다른 메모와 A 계정은 건드리지 않았습니다. 화면 새로고침 뒤 메모 복귀와 A 화면 확인, 6·7번 재확인은 별도로 기록하지 않았으므로 미실행으로 남깁니다.
 
 `aleph.config.json`의 `restoreRoute`에 복원 경로 `POST /api/backup/restore`(서비스 `backup`)를 등록했습니다. `allowedRoutes`와 다른 설정은 바꾸지 않았습니다.
+
+## 11단계: 나만의 접속 앱
+
+**설치형 웹앱:** `public/manifest.webmanifest`(앱 이름 "BYTE BACK 점령된 자료실", 독립 창 `standalone`, 아이콘 192·512)와 `public/sw.js`(화면 뼈대만 저장하는 서비스 워커)를 붙였습니다. 오프라인이면 화면 위쪽에 안내가 뜨고, `/api/` 요청(로그인·자료·기기)은 서비스 워커가 가로채지 않아 토큰이나 자료가 저장소에 남지 않습니다. 따로 설치하는 접속 프로그램은 만들지 않았습니다. **앱을 설치했다는 표시만으로 기기 확인이 끝났다고 보지 않습니다.**
+
+**기기 승인 흐름** (`src/device.mjs`, `api/device.js`, `supabase/devices.sql`):
+1. 로그인한 사용자가 화면의 "이 기기 승인 요청"을 누르면 서버가 대기 요청(`pending`)을 만들고, 기기 비밀을 **HttpOnly·Secure·SameSite=Strict 쿠키**(`vault_device`, 경로 `/api/device`)로만 내려 줍니다. DB에는 비밀의 SHA-256 해시만 저장하며 브라우저 저장소(localStorage 등)에는 기기 키도 토큰도 두지 않습니다(로그인 세션은 이전 단계 그대로).
+2. 승인(`approved`)은 서버 쪽에서만 바뀝니다. 이 API에는 승인으로 바꾸는 경로가 없어 버튼은 요청만 만듭니다. 승인은 소유자가 `supabase/devices.sql` 아래 예시처럼 SQL Editor에서 대기 요청을 확인하고 바꿉니다.
+3. 화면은 서버의 `GET /api/device`가 이 사용자·이 쿠키·이 비밀이 모두 맞고 `approved`라고 답할 때만 메모 화면을 엽니다. 승인 전(없음·대기)에는 메모를 불러오지도 표시하지도 않습니다. 남의 기기, 틀린 비밀, 회수(`revoked`)된 기기는 `none`입니다.
+
+**알려진 한계:** 기존 보호 요청(`/api/notes` 등)은 앞 단계와 같이 로그인 토큰과 소유자 검사로 지켜지며 기기 쿠키를 요구하지 않습니다(심판의 이전 단계 요청이 같은 결과를 유지하도록 하기 위해). 따라서 이 화면의 기기 확인은 **화면에서 자료를 여는 문턱**이고, 토큰을 훔친 사람이 API를 직접 부르는 길은 막지 못합니다. 그 길은 6단계 판정기의 `device_registered` 규칙이 엔진의 기기 정보로 막습니다. 승인을 사람이 SQL로 하므로 대기 요청이 쌓이면 최대 5건에서 새 요청을 거부합니다(429).

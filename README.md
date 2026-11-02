@@ -130,7 +130,7 @@ DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, 
 
 사본이 없거나 해시가 맞지 않으면 모든 명령이 중단됩니다. 이번 실행 결과: 해시 확인 통과, 운영 정책과 사본 차이 없음, 시험 정책에서 `request.deviceRegistered !== true`를 `=== 'never'`로 바꾼 한 줄이 diff에 나왔고, 복원 계획 확인 뒤 `--apply`로 복원해 남은 차이 0건, 보존 항목 `other-service/rules` 유지.
 
-**복원 대상 한 건(시험 계정 B의 가상 메모):** 서비스 `backup`, 경로 `POST /api/backup/restore`, 본문 `{ "id": "<메모 ID>" }`(로그인한 B 본인의 토큰). 비공개 사본 테이블 `notes_backup`(`supabase/notes-backup.sql`, `service_role`만 접근)에서 그 한 건만 되살립니다. 사본 해시(`sha256(title + "\n" + content)`)가 맞지 않으면 중단하고, 남의 사본·남이 가진 ID는 거부합니다. 복원 뒤 ID·소유자·내용 해시를 사본과 대조해 응답(`idMatches`, `ownerMatches`, `hashMatches`)과 감사 기록 `restore_audit`에 남기며 다른 메모는 건드리지 않습니다. 이 경로는 판정기가 허용하는 자료 경로가 아니므로 `allowedRoutes`에 넣지 않았습니다. 복원 대상 메모 ID: **(기록 대기)**
+**복원 대상 한 건(시험 계정 B의 가상 메모):** 서비스 `backup`, 경로 `POST /api/backup/restore`, 본문 `{ "id": "<메모 ID>" }`(로그인한 B 본인의 토큰). 비공개 사본 테이블 `notes_backup`(`supabase/notes-backup.sql`, `service_role`만 접근)에서 그 한 건만 되살립니다. 사본 해시(`sha256(title + "\n" + content)`)가 맞지 않으면 중단하고, 남의 사본·남이 가진 ID는 거부합니다. 복원 뒤 ID·소유자·내용 해시를 사본과 대조해 응답(`idMatches`, `ownerMatches`, `hashMatches`)과 감사 기록 `restore_audit`에 남기며 다른 메모는 건드리지 않습니다. 이 경로는 판정기가 허용하는 자료 경로가 아니므로 `allowedRoutes`에 넣지 않았습니다. 복원 대상 메모 ID(시험 계정 B의 가상 메모 한 건): `e4dafd3b-5f2f-4b2f-978d-620a2554d224`
 
 **복구 뒤 1~9단계 재확인 순서**
 1. `npm ci` 후 `npm run decider:test`(기기 정상 allow·미등록 deny, 복합 이상 step_up) — 이번에 실행, 통과

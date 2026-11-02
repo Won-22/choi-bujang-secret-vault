@@ -74,11 +74,11 @@ test('점검은 요청마다 randomUUID()로 만든 ID를 헤더로 보내고 �
   const real = globalThis.fetch;
   const seen = [];
   try {
-    globalThis.fetch = async (url, init) => { seen.push({ url: String(url), id: init.headers['x-request-id'] }); return new Response('{"error":"X"}', { status: String(url).endsWith('/data.json') ? 404 : 401 }); };
+    globalThis.fetch = async (url, init) => { seen.push({ url: String(url), id: init.headers['x-request-id'], alt: init.headers['x-aleph-request-id'] }); return new Response('{"error":"X"}', { status: String(url).endsWith('/data.json') ? 404 : 401 }); };
     const first = await runAttackChecks(config);
     const second = await runAttackChecks(config);
     assert.deepEqual(seen.slice(0, 2).map((x) => new URL(x.url).pathname), ['/data.json', '/api/notes']);
-    assert.ok(seen.every((x) => UUID4.test(x.id)));
+    assert.ok(seen.every((x) => UUID4.test(x.id) && x.alt === x.id));
     assert.equal(new Set(seen.map((x) => x.id)).size, seen.length);
     assert.equal(first[0].observed, `HTTP 404, request_id=${seen[0].id}`);
     assert.equal(first[1].observed, `HTTP 401, request_id=${seen[1].id}`);
@@ -95,4 +95,18 @@ test('1~12단계 중 시험 기록이 없는 단계가 있으면 기록을 거�
   assert.deepEqual(validateReport(report([base])), []);
   assert.ok(validateReport(report([base]), { requireAllSteps: true }).some((p) => p.includes('1단계')));
   assert.match(renderOps(report([base])), /단계별 기록\(1~12단계\)/u);
+});
+
+test('중간 장치가 요청 ID를 바꿔 넣어 응답이 다른 ID를 돌려주면 그 값을 기록한다', async () => {
+  const { runAttackChecks } = await import('../src/attack-check.mjs');
+  const config = { step: 12, publicAppUrl: 'https://student-defense.vercel.app/', sampleMarker: 'SAMPLE_NOTE_1', judgeIssuer: 'https://x.up.railway.app/defense/judge' };
+  const real = globalThis.fetch;
+  try {
+    globalThis.fetch = async (url) => new Response('{"error":"X"}', { status: String(url).endsWith('/data.json') ? 404 : 401, headers: { 'x-request-id': 'proxy-assigned-0001' } });
+    const out = await runAttackChecks(config);
+    assert.equal(out[0].observed, 'HTTP 404, request_id=proxy-assigned-0001');
+    assert.equal(out[1].observed, 'HTTP 401, request_id=proxy-assigned-0001');
+  } finally {
+    globalThis.fetch = real;
+  }
 });

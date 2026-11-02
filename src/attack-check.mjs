@@ -1,13 +1,17 @@
 import { randomUUID } from 'node:crypto';
 
-// 보내는 GET마다 randomUUID()로 새 요청 ID를 만들어 x-request-id로 보내고, 실제로 받은 HTTP 상태와 같은 ID를 observed에 적는다.
+// 보내는 GET마다 randomUUID()로 새 요청 ID를 만들어 x-request-id와 x-aleph-request-id로 보내고, 실제로 받은 HTTP 상태와 요청 ID를 observed에 적는다.
+// 중간 장치가 x-request-id를 바꿔 넣었다면 서버가 응답으로 돌려준 값이 실제로 기록된 ID이므로 그 값을 적는다(바뀌지 않았다면 보낸 ID와 같다).
 // 요청을 보내지 않았거나 응답을 받지 못한 점검은 상태와 ID를 지어내지 않고 not_run(미실행)으로 적는다.
+const ID_PATTERN = /^[A-Za-z0-9._:-]{8,100}$/u;
 async function sendGet(url, headers = {}) {
   const requestId = randomUUID();
   try {
-    const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId },
+    const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId, 'x-aleph-request-id': requestId },
       redirect: 'error', signal: AbortSignal.timeout(10000) });
-    return { response, status: response.status, requestId, sent: true, tag: `HTTP ${response.status}, request_id=${requestId}` };
+    const echoed = response.headers?.get?.('x-request-id');
+    const id = typeof echoed === 'string' && ID_PATTERN.test(echoed) ? echoed : requestId;
+    return { response, status: response.status, requestId: id, sent: true, tag: `HTTP ${response.status}, request_id=${id}` };
   } catch (error) {
     return { response: null, status: null, requestId: null, sent: false,
       tag: `not_run: 응답을 받지 못함(${error.cause?.code ?? error.message})` };

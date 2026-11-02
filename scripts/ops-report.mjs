@@ -218,6 +218,17 @@ skip('N04', 11, 'app', '승인 전 메모 API 거부와 승인 뒤 정상 화면
 skip('N05', 11, 'app', '브라우저의 앱 설치와 오프라인 안내 화면', '브라우저 설치 아이콘·오프라인 전환', '설치 가능, 오프라인 안내 표시', '브라우저에서 서비스 워커 등록·매니페스트·오프라인 안내 동작은 확인했지만(스크립트 실행 아님) 설치 버튼과 실제 네트워크를 끈 새로고침은 확인하지 못했고 이 도구가 실행하지 않았습니다.');
 skip('N06', 12, 'api', '심판의 41종 공격 방어', '심판이 실행', '41종 모두 방어', '심판이 따로 실행하며 목록과 결과를 이 저장소에서 알 수 없습니다. 통과로 처리하지 않았습니다.', 'forbidden');
 
+// ops:live가 실측한 행(V01~V14)은 이 도구가 다시 실행할 수 없으므로 이전 기록에서 그대로 가져온다(원래 확인 시각·요청 ID 유지).
+try {
+  const previous = JSON.parse(readFileSync(resolve(root, 'ops', 'report.json'), 'utf8')).rows.filter((x) => /^V\d+$/u.test(x.id));
+  if (previous.length) {
+    for (const keep of previous) rows.push(keep);
+    if (previous.some((x) => x.id === 'V04') && previous.some((x) => x.id === 'V09')) {
+      for (const id of ['N01', 'N02', 'N04']) { const at = rows.findIndex((x) => x.id === id); if (at >= 0) rows.splice(at, 1); }
+    }
+  }
+} catch { /* 이전 기록이 없으면 그대로 진행 */ }
+
 const report = {
   version: 1, generatedAt: now(), baseUrl: BASE,
   inspectedCommit: (() => { try { return JSON.parse(identity?.text ?? '{}').commit ?? '확인하지 못함'; } catch { return '확인하지 못함'; } })(),

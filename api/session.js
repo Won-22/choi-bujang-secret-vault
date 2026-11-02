@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import config from '../aleph.config.json' with { type: 'json' };
 import { sessionApi } from '../src/session-api.mjs';
 import { echoRequestId } from '../src/request-log.mjs';
+import { observe } from '../src/observe.mjs';
+import { recordRow } from '../src/observe-runtime.mjs';
 
 const options = { auth: { persistSession: false, autoRefreshToken: false } };
 
@@ -16,8 +18,8 @@ export default async function handler(request, response) {
     return response.status(500).json({ error: 'SERVER_NOT_CONFIGURED' });
   }
   // 요청마다 새 클라이언트를 만들어, 한 사용자의 세션이 다음 요청에 섞이지 않게 한다.
-  return sessionApi({
+  return observe(request, response, (res) => sessionApi({
     auth: createClient(url, publishable, options).auth,
     revoke: (token) => createClient(url, secret, options).auth.admin.signOut(token, 'local'),
-  })(request, response);
+  })(request, res), recordRow);
 }

@@ -80,39 +80,59 @@ async function checkStep2(app, config) {
   ];
 }
 
-// 3단계: 로그인 없이 목록을 부르면 401/403 JSON으로 거부되는지 확인한다. 로그인한 A 계정의 흐름은 직접 확인한다.
-async function checkStep3(app, step, config) {
-  const get = (path) => sendGet(new URL(path, app));
-  const old = await get('/data.json');
-  const list = await get('/api/notes');
-  let jsonError = false;
-  try {
-    jsonError = typeof (await list.response?.json())?.error === 'string';
-  } catch {
-    // JSON이 아니면 거부 문구를 확인하지 못한 것이다.
+// 서버 관측 확인: 우리 서버가 같은 요청 ID를 받아 같은 상태로 기록했는지 /api/observed로 묻는다(기록이 남을 때까지 잠깐씩 기다려 최대 3번).
+// 서버가 확인해 주면 그 상태를, 확인하지 못하면 null을 돌려준다(확인하지 못한 것을 확인된 것처럼 적지 않는다).
+async function serverObserved(app, requestId, status) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const asked = await sendGet(new URL(`/api/observed?request_id=${requestId}`, app));
+    if (asked.sent && asked.status === 200) {
+      const body = await asked.response.json().catch(() => null);
+      const hit = body?.observations?.find((o) => o.status === status);
+      if (hit) return hit.status;
+    }
+    await new Promise((resolve) => setTimeout(resolve, Number(process.env.ATTACK_CHECK_WAIT_MS ?? 400)));
   }
-  const refused = [401, 403].includes(list.status) && jsonError;
-  return [
-    { attackId: 'static_data_json_gone', expected: '로그인 없는 GET /data.json에 메모가 없거나 404',
-      observed: old.tag },
-    { attackId: 'anonymous_list_refused', expected: '로그인 없는 GET /api/notes는 401/403과 JSON 오류',
-      observed: list.tag },
-    { attackId: 'login_note_flow', expected: 'A 로그인 뒤 메모 추가·수정·삭제 가능',
-      observed: 'not_run(미실행): 요청을 보내지 않음, 이 스크립트는 로그인 정보를 쓰지 않아 화면에서 직접 확인함' },
-    ...(step >= 5 ? [await checkOriginalApi(config)] : []),
-    ...(step >= 4 ? [{ attackId: 'cross_owner_access', expected: 'B가 A의 메모를 읽기·수정·삭제하거나 소유자를 바꾸면 거부',
-      observed: 'not_run(미실행): 요청을 보내지 않음, 이 스크립트는 로그인 정보를 쓰지 않아 A/B 두 창에서 직접 확인함' }] : []),
+  return null;
+}
+
+// 로그인 없이 보낸 GET 한 건: 실제 상태와 요청 ID, 그리고 서버가 확인해 준 상태만 observed에 적는다.
+async function anonymousGet(app, path, attackId, expected) {
+  const sent = await sendGet(new URL(path, app));
+  const seen = sent.sent ? await serverObserved(app, sent.requestId, sent.status) : null;
+  return { attackId, expected, observed: seen === null ? sent.tag : `${sent.tag}, server_observed=${seen}` };
+}
+
+const notRun = (attackId, expected, why) => ({ attackId, expected, observed: `not_run(미실행): 요청을 보내지 않음, ${why}` });
+
+// 3단계 이후: 1~11단계 점검마다 기대 결과와 실제 결과를 남긴다. 로그인 없이 보내는 GET만 실제로 보내고, 나머지는 요청을 보내지 않았으므로 not_run이다.
+async function checkStep3(app, step, config) {
+  const ITEM = '33333333-3333-4333-8333-333333333333';
+  const attempts = [
+    await anonymousGet(app, '/data.json', 'static_data_json_gone', '2단계: 로그인 없는 GET /data.json에 메모가 없거나 404'),
+    await anonymousGet(app, '/api/notes', 'anonymous_list_refused', '3단계: 로그인 없는 GET /api/notes는 401/403과 JSON 오류'),
   ];
+  if (step >= 4) attempts.push(await anonymousGet(app, `/api/notes/${ITEM}`, 'anonymous_item_refused', '4단계: 로그인 없는 GET /api/notes/:id는 401/403'));
+  if (step >= 5) attempts.push(await checkOriginalApi(config));
+  if (step >= 6) attempts.push(notRun('decider_device_registered', '6단계: 미등록 기기 요청은 deny device_not_registered', '판정기는 요청이 아닌 함수 시험이라 npm run decider:test로 실행함'));
+  if (step >= 7) attempts.push(notRun('decider_step_up_required', '7단계: 새벽·처음 보는 네트워크·대량 읽기는 step_up', '판정기는 요청이 아닌 함수 시험이라 npm run decider:test로 실행함'));
+  if (step >= 8) attempts.push(notRun('decider_resource_zone', '8단계: 메모 목록·반 공지 쓰기·강사 자료는 deny', '판정기는 요청이 아닌 함수 시험이라 npm test로 실행함'));
+  if (step >= 9) attempts.push(notRun('detect_burst_read', '9단계: 10분 안 GET 121건부터 propose_revocation', '탐지는 요청이 아닌 함수 시험이라 npm run detect:test로 실행함'));
+  if (step >= 10) attempts.push(notRun('restore_route_login_required', '10단계: 로그인 없는 POST /api/backup/restore는 401', 'POST 요청이라 이 점검은 GET만 보내므로 보내지 않음(npm run ops:report에서 실측)'));
+  if (step >= 11) attempts.push(await anonymousGet(app, '/api/device', 'anonymous_device_refused', '11단계: 로그인 없는 GET /api/device는 401/403'));
+  attempts.push(notRun('login_note_flow', '3단계: A 로그인 뒤 메모 추가·수정·삭제 가능', '이 스크립트는 로그인 정보를 쓰지 않아 화면과 ops:live에서 확인함'));
+  if (step >= 4) attempts.push(notRun('cross_owner_access', '4단계: B가 A의 메모를 읽기·수정·삭제하거나 소유자를 바꾸면 거부', '이 스크립트는 로그인 정보를 쓰지 않아 ops:live에서 확인함'));
+  return attempts;
 }
 
 // 5단계: 공개(anon) 키로 원본 자료 주소를 직접 불러도 메모가 없어야 한다. 키는 환경변수로만 받는다.
 async function checkOriginalApi(config) {
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!key) {
-    return { attackId: 'original_api_direct', expected: '공개 키로 원본 자료를 직접 불러도 메모가 없음',
+    return { attackId: 'original_api_direct', expected: '5단계: 공개 키로 원본 자료를 직접 불러도 메모가 없음',
       observed: 'not_run(미실행): 요청을 보내지 않음, SUPABASE_PUBLISHABLE_KEY 환경변수가 없음' };
   }
   const sent = await sendGet(config.originalApiUrl, { apikey: key }, { proof: false });
+  if (!sent.sent) return { attackId: 'original_api_direct', expected: '5단계: 공개 키로 원본 자료를 직접 불러도 메모가 없음', observed: sent.tag };
   let rows = 0;
   try {
     const data = await sent.response?.json();
@@ -120,6 +140,6 @@ async function checkOriginalApi(config) {
   } catch {
     // JSON이 아니면 읽은 메모가 없다.
   }
-  return { attackId: 'original_api_direct', expected: '공개 키로 원본 자료를 직접 불러도 메모가 없음',
+  return { attackId: 'original_api_direct', expected: '5단계: 공개 키로 원본 자료를 직접 불러도 메모가 없음',
     observed: `anon 키로 원본 직접 GET: 메모 ${rows}건 (${sent.tag})` };
 }

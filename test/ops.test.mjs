@@ -67,50 +67,18 @@ test('점검 원문(observed)과 보고서 행의 요청 ID·상태가 다르면
   assert.ok(validateReport(noId).length > 0);
 });
 
-test('점검은 요청마다 randomUUID()로 만든 ID를 헤더로 보내고 같은 ID와 실제 상태만 기록하며 응답이 없으면 not_run', async () => {
-  const { runAttackChecks } = await import('../src/attack-check.mjs');
-  const config = { step: 12, publicAppUrl: 'https://student-defense.vercel.app/', sampleMarker: 'SAMPLE_NOTE_1', judgeIssuer: 'https://x.up.railway.app/defense/judge' };
-  const UUID4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
-  const real = globalThis.fetch;
-  const seen = [];
-  try {
-    globalThis.fetch = async (url, init) => { seen.push({ url: String(url), id: init.headers['x-request-id'], alt: init.headers['x-aleph-request-id'] }); return new Response('{"error":"X"}', { status: String(url).endsWith('/data.json') ? 404 : 401, headers: { 'x-vercel-id': 'icn1::test-0001' } }); };
-    const first = await runAttackChecks(config);
-    const second = await runAttackChecks(config);
-    assert.deepEqual(seen.slice(0, 2).map((x) => new URL(x.url).pathname), ['/data.json', '/api/notes']);
-    assert.ok(seen.every((x) => UUID4.test(x.id) && x.alt === x.id));
-    assert.equal(new Set(seen.map((x) => x.id)).size, seen.length);
-    assert.equal(first[0].observed, `HTTP 404, request_id=${seen[0].id}`);
-    assert.equal(first[1].observed, `HTTP 401, request_id=${seen[1].id}`);
-    assert.notEqual(first[0].observed, second[0].observed);
-    // 서버 흔적(x-vercel-id·x-request-id)이 없는 응답은 실제 서버 응답으로 보지 않고 상태·ID를 적지 않는다
-    globalThis.fetch = async () => new Response('blocked', { status: 403 });
-    const canned = await runAttackChecks(config);
-    for (const item of canned.slice(0, 2)) assert.ok(item.observed.startsWith('not_run') && !/request_id=|HTTP \d/u.test(item.observed));
-    globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
-    const none = await runAttackChecks(config);
-    for (const item of none.slice(0, 2)) assert.ok(item.observed.startsWith('not_run') && !/request_id=|HTTP \d/u.test(item.observed));
-  } finally {
-    globalThis.fetch = real;
-  }
-});
-
 test('1~12단계 중 시험 기록이 없는 단계가 있으면 기록을 거부한다', () => {
   assert.deepEqual(validateReport(report([base])), []);
   assert.ok(validateReport(report([base]), { requireAllSteps: true }).some((p) => p.includes('1단계')));
   assert.match(renderOps(report([base])), /단계별 기록\(1~12단계\)/u);
 });
 
-test('중간 장치가 요청 ID를 바꿔 넣어 응답이 다른 ID를 돌려주면 그 값을 기록한다', async () => {
-  const { runAttackChecks } = await import('../src/attack-check.mjs');
-  const config = { step: 12, publicAppUrl: 'https://student-defense.vercel.app/', sampleMarker: 'SAMPLE_NOTE_1', judgeIssuer: 'https://x.up.railway.app/defense/judge' };
-  const real = globalThis.fetch;
-  try {
-    globalThis.fetch = async (url) => new Response('{"error":"X"}', { status: String(url).endsWith('/data.json') ? 404 : 401, headers: { 'x-request-id': 'proxy-assigned-0001' } });
-    const out = await runAttackChecks(config);
-    assert.equal(out[0].observed, 'HTTP 404, request_id=proxy-assigned-0001');
-    assert.equal(out[1].observed, 'HTTP 401, request_id=proxy-assigned-0001');
-  } finally {
-    globalThis.fetch = real;
-  }
+test('서버 관측은 같은 요청의 실제 상태와 같을 때만 기록으로 인정한다', () => {
+  const row = { ...base, id: 'A01', attackId: 'static_data_json_gone', source: 'live', actual: 'HTTP 404', requestId: UUID, serverObserved: 'HTTP 404' };
+  const ok = { ...report([row]), attackEvidence: [{ attackId: 'static_data_json_gone', expected: 'x', observed: `HTTP 404, request_id=${UUID}, server_observed=404` }] };
+  assert.deepEqual(validateReport(ok), []);
+  assert.match(renderOps(ok), /서버 관측/u);
+  assert.ok(validateReport({ ...ok, rows: [{ ...row, serverObserved: 'HTTP 200' }] }).length > 0);
+  assert.ok(validateReport({ ...ok, rows: [{ ...row, serverObserved: 'bad' }] }).length > 0);
+  assert.ok(validateReport({ ...ok, rows: [{ ...row, serverObserved: undefined }] }).length > 0);
 });

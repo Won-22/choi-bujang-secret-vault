@@ -5,6 +5,8 @@ import { notesApi } from './notes.mjs';
 import { restoreApi } from './restore.mjs';
 import { createDeviceCheck, deviceApi } from './device.mjs';
 import { echoRequestId } from './request-log.mjs';
+import { observe } from './observe.mjs';
+import { recordRow } from './observe-runtime.mjs';
 
 const COLUMNS = 'id, title, content';
 let runtime;
@@ -52,6 +54,6 @@ export function handler(name) {
       response.setHeader('Cache-Control', 'no-store');
       return response.status(500).json({ error: 'SERVER_NOT_CONFIGURED' });
     }
-    return runtime[name](request, response);
+    return observe(request, response, (res) => runtime[name](request, res), recordRow);
   };
 }

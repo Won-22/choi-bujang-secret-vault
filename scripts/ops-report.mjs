@@ -104,12 +104,39 @@ const evidence = await runAttackChecks(config);
 for (const item of evidence) {
   const id = /request_id=([0-9a-f-]{36})/u.exec(item.observed)?.[1] ?? null;
   const code = /HTTP (\d{3})/u.exec(item.observed)?.[1] ?? null;
-  const expectedCode = { static_data_json_gone: ['404'], anonymous_list_refused: ['401', '403'], original_api_direct: ['401', '403'] }[item.attackId];
+  const seen = /server_observed=(\d{3})/u.exec(item.observed)?.[1] ?? null;
+  const expectedCode = { static_data_json_gone: ['404'], anonymous_list_refused: ['401', '403'], anonymous_item_refused: ['401', '403'], anonymous_device_refused: ['401', '403'], original_api_direct: ['401', '403'] }[item.attackId];
   const sent = Boolean(id && code);
-  add({ attackId: item.attackId, id: `A${String(rows.filter((r) => r.attackId).length + 1).padStart(2, '0')}`, step: 12, group: 'api', kind: 'forbidden',
+  const stepOf = Number(/^(\d+)단계/u.exec(item.expected)?.[1] ?? 12);
+  const row = { attackId: item.attackId, id: `A${String(rows.filter((r) => r.attackId).length + 1).padStart(2, '0')}`, step: stepOf, group: 'api', kind: 'forbidden',
     name: `자기 점검 ${item.attackId}`, request: 'src/attack-check.mjs의 runAttackChecks', expected: item.expected,
     actual: sent ? `HTTP ${code}` : '미실행', status: !sent ? '미실행' : expectedCode?.includes(code) ? '통과' : '실패', source: sent ? 'live' : 'not_run',
-    requestId: sent ? id : null, checkedAt: sent ? now() : null, note: sent ? '번들이 쓰는 점검과 같은 코드, observed 원문은 attackEvidence에 있음' : item.observed.replace(/^not_run\(미실행\):\s*/u, '') });
+    requestId: sent ? id : null, checkedAt: sent ? now() : null, note: sent ? '번들이 쓰는 점검과 같은 코드, observed 원문은 attackEvidence에 있음' : item.observed.replace(/^not_run\(미실행\):\s*/u, '').replace(/^not_run:\s*/u, '') };
+  if (sent && seen) row.serverObserved = `HTTP ${seen}`;
+  add(row);
+}
+
+// ── 서버 관측 대조: 서버 함수가 받은 요청이면 서버가 같은 요청 ID를 같은 상태로 기록했는지 /api/observed로 확인해 행에 적는다 ──
+async function serverSaw(requestId) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const res = await fetch(`${BASE}/api/observed?request_id=${requestId}`, { signal: AbortSignal.timeout(15000), headers: { 'x-request-id': randomUUID() } });
+      const body = await res.json();
+      if (body?.observations?.length) return body.observations[0].status;
+    } catch { /* 확인하지 못하면 적지 않는다 */ }
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+  return null;
+}
+for (const row of rows) {
+  const path = /^[A-Z]+ (\S+)/u.exec(row.request)?.[1] ?? '';
+  const isFunction = path.startsWith('/api/') || path === '/data.json';
+  if (row.source !== 'live' || !row.requestId || row.serverObserved || !isFunction || path.startsWith('/api/observed')) continue;
+  const status = await serverSaw(row.requestId);
+  const code = Number(/HTTP (\d{3})/u.exec(row.actual)?.[1]);
+  if (status === null) continue;
+  row.serverObserved = `HTTP ${status}`;
+  if (status !== code) { row.status = '실패'; row.note = `${row.note} 서버 관측 ${status}과 받은 상태 ${code}가 다름`.trim(); }
 }
 
 // ── 판정기 규칙: 가상 요청으로 실제 decide()를 실행 ─────────────────────────────────

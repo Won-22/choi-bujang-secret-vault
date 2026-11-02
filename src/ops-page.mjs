@@ -7,7 +7,7 @@ const GROUPS = ['rules', 'detect', 'revocation', 'restore', 'api', 'app'];
 const FORBIDDEN_KEYS = ['title', 'content', 'body', 'token', 'password', 'secret'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/u;
-const ROW_KEYS = ['attackId', 'id', 'step', 'group', 'kind', 'name', 'request', 'expected', 'actual', 'status', 'source', 'requestId', 'serverId', 'checkedAt', 'note'];
+const ROW_KEYS = ['attackId', 'serverObserved', 'id', 'step', 'group', 'kind', 'name', 'request', 'expected', 'actual', 'status', 'source', 'requestId', 'serverId', 'checkedAt', 'note'];
 
 // 1~12단계 각각에 시험 행이 하나 이상 있어야 '빠짐없이 기록'한 것이다. 단계별 건수를 돌려준다.
 export const coverageBy = (rows) => Array.from({ length: 12 }, (_, i) => ({ step: i + 1, rows: rows.filter((r) => r.step === i + 1) }))
@@ -38,6 +38,11 @@ export function validateReport(report, { requireAllSteps = false } = {}) {
     for (const key of ['name', 'request', 'expected', 'actual']) if (typeof row[key] !== 'string' || !row[key]) problems.push(`${where}: ${key}가 비어 있습니다.`);
     const measured = row.status === '통과' || row.status === '실패';
     if (measured && (!['local', 'live'].includes(row.source) || !UUID.test(row.requestId ?? '') || !ISO.test(row.checkedAt ?? ''))) problems.push(`${where}: 실측 결과에는 실제 실행 출처·요청 ID·확인 시각이 필요합니다.`);
+    if (row.serverObserved !== undefined) {
+      const seen = /^HTTP (\d{3})$/u.exec(row.serverObserved)?.[1];
+      const code = /HTTP (\d{3})/u.exec(row.actual ?? '')?.[1];
+      if (!seen || row.source !== 'live' || !code || seen !== code) problems.push(`${where}: 서버 관측이 실제 결과와 맞지 않습니다.`);
+    }
     if (row.status === '직접 확인' && row.source !== 'manual') problems.push(`${where}: 직접 확인은 manual 출처여야 합니다.`);
     if (row.status === '미실행' && (row.source !== 'not_run' || row.actual !== '미실행' || typeof row.note !== 'string' || row.note.length < 5)) problems.push(`${where}: 미실행은 이유가 필요하고 실제 결과를 적을 수 없습니다.`);
     if (row.source === 'not_run' && row.status !== '미실행') problems.push(`${where}: 실행하지 않은 시험을 통과 처리할 수 없습니다.`);
@@ -47,6 +52,8 @@ export function validateReport(report, { requireAllSteps = false } = {}) {
     const id = /request_id=([0-9a-f-]{36})/u.exec(item.observed ?? '')?.[1];
     const status = /HTTP (\d{3})/u.exec(item.observed ?? '')?.[1];
     const row = report.rows.find((r) => r.attackId === item.attackId);
+    const seenByServer = /server_observed=(\d{3})/u.exec(item.observed ?? '')?.[1];
+    if (seenByServer && row?.serverObserved !== `HTTP ${seenByServer}`) problems.push(`점검 ${item.attackId}의 서버 관측이 보고서 행과 맞지 않습니다.`);
     if (id && (!row || row.requestId !== id || row.actual !== `HTTP ${status}`)) problems.push(`점검 ${item.attackId}의 observed와 보고서 행이 맞지 않습니다.`);
     if (!id && row && row.status !== '미실행') problems.push(`점검 ${item.attackId}는 요청 ID가 없는데 보고서에는 실측으로 적혀 있습니다.`);
   }
@@ -71,7 +78,7 @@ const PANELS = [
 const tableRows = (rows) => rows.map((r) => `<tr>
 <td>${esc(r.id)}</td><td>${r.step}</td><td>${r.kind === 'forbidden' ? '금지' : r.kind === 'normal' ? '정상' : '안내'}</td>
 <td>${esc(r.name)}<br><small>${esc(r.request)}</small></td><td>${esc(r.expected)}</td><td>${esc(r.actual)}</td>
-<td>${badge(r.status)}</td><td><small>${esc(r.requestId ?? '—')}${r.serverId ? `<br>서버 ${esc(r.serverId)}` : ''}</small></td>
+<td>${badge(r.status)}</td><td><small>${esc(r.requestId ?? '—')}</small></td><td><small>${esc(r.serverObserved ?? '—')}</small></td><td><small>${r.serverId ? `서버 ${esc(r.serverId)}` : '—'}</small></td>
 <td><small>${esc(r.checkedAt ?? '시각 기록 없음')}</small></td><td><small>${esc(r.note ?? '')}</small></td></tr>`).join('\n');
 
 export function renderOps(report) {
@@ -130,7 +137,7 @@ ${coverageBy(report.rows).map((c) => `<tr><td>${c.step}</td><td>${c.total}</td><
 <ul>${(report.attackEvidence ?? []).map((e) => `<li><code>${esc(e.attackId)}</code> — ${esc(e.observed)}</li>`).join('')}</ul>
 <h2>전체 시험표</h2>
 <div class="wrap"><table>
-<thead><tr><th>번호</th><th>단계</th><th>구분</th><th>시험</th><th>기대 결과</th><th>실제 결과</th><th>상태</th><th>요청 ID</th><th>확인 시각</th><th>비고</th></tr></thead>
+<thead><tr><th>번호</th><th>단계</th><th>구분</th><th>시험</th><th>기대 결과</th><th>실제 결과</th><th>상태</th><th>요청 ID</th><th>서버 관측</th><th>서버 요청 번호</th><th>확인 시각</th><th>비고</th></tr></thead>
 <tbody>
 ${tableRows(report.rows)}
 </tbody></table></div>

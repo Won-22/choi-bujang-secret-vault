@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "generatedAt": "2026-11-02T06:52:03.352Z",
+  "generatedAt": "2026-11-02T06:59:12.163Z",
   "baseUrl": "https://choi-bujang-secret-vault-won-22.vercel.app",
-  "inspectedCommit": "7dcaff68395cda0fecda041e4d5550b01364b4c1",
+  "inspectedCommit": "fa8e4a94c2bffeb353f4c3f60d6e770b06293164",
   "deployedStep": 12,
   "policySnapshotHash": "9c625eaedea0bccf195cea7dab49c7e985786aa5226fa3bb551f9051e997a7f5",
   "attackEvidence": [
@@ -41,7 +41,7 @@
   },
   "rows": [
     {
-      "serverId": "icn1::9dgnb-1793602315759-243a2d6e994b",
+      "serverId": "icn1::mkvlm-1793602745943-363d3c06392e",
       "note": "",
       "id": "L01",
       "step": 3,
@@ -53,11 +53,11 @@
       "actual": "HTTP 200",
       "status": "통과",
       "source": "live",
-      "requestId": "46a91154-18f8-4847-83cc-05f647c87de0",
-      "checkedAt": "2026-11-02T06:51:54.434Z"
+      "requestId": "9983bf50-a2d2-4115-871a-1650244f7d56",
+      "checkedAt": "2026-11-02T06:59:05.809Z"
     },
     {
-      "serverId": "icn1::9dgnb-1793602315759-243a2d6e994b",
+      "serverId": "icn1::mkvlm-1793602745943-363d3c06392e",
       "note": "L01에서 받은 화면을 검색한 결과",
       "id": "L02",
       "step": 11,
@@ -69,11 +69,11 @@
       "actual": "0건",
       "status": "통과",
       "source": "live",
-      "requestId": "0a2379fe-c853-4aef-b65f-401983b3b023",
-      "checkedAt": "2026-11-02T06:51:56.143Z"
+      "requestId": "79a0fafe-927a-455c-80ed-7158b32753c9",
+      "checkedAt": "2026-11-02T06:59:05.914Z"
     },
     {
-      "serverId": "icn1::9dgnb-1793602315759-243a2d6e994b",
+      "serverId": "icn1::mkvlm-1793602745943-363d3c06392e",
       "note": "L01에서 받은 화면을 검색한 결과",
       "id": "L03",
       "step": 11,
@@ -85,11 +85,11 @@
       "actual": "연결 있음",
       "status": "통과",
       "source": "live",
-      "requestId": "09a726d1-64a2-492f-a82c-7804d8f56934",
-      "checkedAt": "2026-11-02T06:51:56.143Z"
+      "requestId": "11ed61bd-9142-4f39-8be4-f75e81b43d24",
+      "checkedAt": "2026-11-02T06:59:05.914Z"
     },
     {
-      "serverId": "icn1::9dgnb-1793602315759-243a2d6e994b",
+      "serverId": "icn1::mkvlm-1793602745943-363d3c06392e",
       "note": "L01 응답의 헤더",
       "id": "L04",
       "step": 1,
@@ -101,11 +101,11 @@
       "actual": "nosniff",
       "status": "통과",
       "source": "live",
-      "requestId": "7202b074-373f-4321-b28f-5f991d2a550b",
-      "checkedAt": "2026-11-02T06:51:56.143Z"
+      "requestId": "508d9927-eeaf-4231-8312-5c3e7047fd1a",
+      "checkedAt": "2026-11-02T06:59:05.914Z"
     },
     {
-      "serverId": "icn1::9dgnb-1793602316430-0c229d80c7dc",
+      "serverId": "icn1::iad1::mkvlm-1793602745974-4ef42f11d779",
       "note": "",
       "id": "L05",
       "step": 2,
@@ -114,14 +114,14 @@
       "name": "옛 공개 자료 파일은 사라졌다",
       "request": "GET /data.json",
       "expected": "HTTP 404",
-      "actual": "HTTP 404",
+      "actual": "HTTP 404 GONE",
       "status": "통과",
       "source": "live",
-      "requestId": "bffbd494-de03-4af8-bf1a-f9615a336e95",
-      "checkedAt": "2026-11-02T06:51:56.143Z"
+      "requestId": "113a6bd4-e78b-4e1e-8ea6-b9f2aa34d646",
+      "checkedAt": "2026-11-02T06:59:05.914Z"
     },
     {
-      "serverId": "icn1::iad1::9dgnb-1793602316660-e6c5d4bd5572",
+      "serverId": "icn1::iad1::jmdsn-1793602746187-b2bb29a3fb74",
       "note": "",
       "id": "L06",
       "step": 3,
@@ -133,11 +133,11 @@
       "actual": "HTTP 401 LOGIN_REQUIRED",
       "status": "통과",
       "source": "live",
-      "requestId": "13866c34-c0c2-4d3f-84bb-91e4b56594f1",
-      "checkedAt": "2026-11-02T06:51:56.596Z"
+      "requestId": "0b0d3b44-26b0-4c93-b868-22a321cfeaaa",
+      "checkedAt": "2026-11-02T06:59:06.127Z"
     },
     {
-      "serverId": "icn1::iad1::9dgnb-1793602317002-9d4c05365db6",
+      "serverId": "icn1::iad1::44vcd-1793602746408-bbbf15d1a31f",
       "note": "",
       "id": "L07",
       "step": 3,
@@ -149,11 +149,11 @@
       "actual": "HTTP 401 LOGIN_REQUIRED",
       "status": "통과",
       "source": "live",
-      "requestId": "d6a35906-daa2-46bd-a4aa-d5e733fd20f7",
-      "checkedAt": "2026-11-02T06:51:56.932Z"
+      "requestId": "ba75a0a6-d48d-45e7-b6a1-d3b3b645e192",
+      "checkedAt": "2026-11-02T06:59:06.340Z"
     },
     {
-      "serverId": "icn1::iad1::9dgnb-1793602317219-036589b60468",
+      "serverId": "icn1::iad1::44vcd-1793602746633-d2fbbe6dfe2a",
       "note": "",
       "id": "L08",
       "step": 4,
@@ -165,11 +165,11 @@
       "actual": "HTTP 401 LOGIN_REQUIRED",
       "status": "통과",
       "source": "live",
-      "requestId": "2f7a0eaf-8d6e-4033-ae4f-7e780a42d0af",
-      "checkedAt": "2026-11-02T06:51:57.154Z"
+      "requestId": "c4c0ccba-2ed5-4fbd-9f7d-4e3225279cb7",
+      "checkedAt": "2026-11-02T06:59:06.569Z"
     },
     {
-      "serverId": "icn1::iad1::rhxzp-1793602317521-ed5c066f7654",
+      "serverId": "icn1::iad1::mkvlm-1793602746945-bfe207b02447",
       "note": "",
       "id": "L09",
       "step": 4,
@@ -181,11 +181,11 @@
       "actual": "HTTP 401 LOGIN_REQUIRED",
       "status": "통과",
       "source": "live",
-      "requestId": "c9fa30dd-c386-4fd2-82ad-eaecbc78a7a3",
-      "checkedAt": "2026-11-02T06:51:57.454Z"
+      "requestId": "e837723f-8255-42e4-9a19-36fc3b345637",
+      "checkedAt": "2026-11-02T06:59:06.876Z"
     },
     {
-      "serverId": "icn1::iad1::jmdsn-1793602317966-4bae570b9848",
+      "serverId": "icn1::iad1::mkvlm-1793602747157-b48991cd5dd1",
       "note": "",
       "id": "L10",
       "step": 4,
@@ -197,11 +197,11 @@
       "actual": "HTTP 401 LOGIN_REQUIRED",
       "status": "통과",
       "source": "live",
-      "requestId": "3b554bc1-0bf6-426a-b85e-8454ce1b0b16",
-      "checkedAt": "2026-11-02T06:51:57.898Z"
+      "requestId": "9959ae4d-b4e2-4738-81a6-a9322e818712",
+      "checkedAt": "2026-11-02T06:59:07.096Z"
     },
     {
-      "serverId": "icn1::iad1::jmdsn-1793602318382-982a2a6b7e14",
+      "serverId": "icn1::iad1::mkvlm-1793602747383-7f1b984911bb",
       "note": "",
       "id": "L11",
       "step": 3,
@@ -213,11 +213,11 @@
       "actual": "HTTP 401 LOGIN_FAILED",
       "status": "통과",
       "source": "live",
-      "requestId": "6e8254b3-9840-4dec-8507-d9b10b511935",
-      "checkedAt": "2026-11-02T06:51:58.316Z"
+      "requestId": "7cfb0c9b-882f-4fb7-8e84-60c9c8b2b115",
+      "checkedAt": "2026-11-02T06:59:07.319Z"
     },
     {
-      "serverId": "icn1::iad1::4kw9r-1793602319477-1f44b2ce1f16",
+      "serverId": "icn1::iad1::mkvlm-1793602748583-7b755f817b53",
       "note": "",
       "id": "L12",
       "step": 3,
@@ -229,11 +229,11 @@
       "actual": "HTTP 400 INVALID_LOGIN",
       "status": "통과",
       "source": "live",
-      "requestId": "dc6a8c4d-9e7d-4093-adb8-7a44119d6598",
-      "checkedAt": "2026-11-02T06:51:59.411Z"
+      "requestId": "8119c98f-af2b-4008-8ab5-f78edf93922b",
+      "checkedAt": "2026-11-02T06:59:08.522Z"
     },
     {
-      "serverId": "icn1::jmdsn-1793602319938-3c00275360a6",
+      "serverId": "icn1::mkvlm-1793602748798-a5d4f9d6b203",
       "note": "",
       "id": "L13",
       "step": 8,
@@ -245,11 +245,11 @@
       "actual": "HTTP 404",
       "status": "통과",
       "source": "live",
-      "requestId": "ecfdb1ac-004b-43c0-8460-50f9c38cd4fc",
-      "checkedAt": "2026-11-02T06:51:59.873Z"
+      "requestId": "f9c61c37-03ac-4a1f-b8e2-7deaef92d38d",
+      "checkedAt": "2026-11-02T06:59:08.736Z"
     },
     {
-      "serverId": "icn1::iad1::jmdsn-1793602319956-e54cce59113c",
+      "serverId": "icn1::iad1::4kw9r-1793602748816-8c67005b74ef",
       "note": "",
       "id": "L14",
       "step": 10,
@@ -261,11 +261,11 @@
       "actual": "HTTP 401 LOGIN_REQUIRED",
       "status": "통과",
       "source": "live",
-      "requestId": "0373ab62-1217-41b5-96ae-da2dea2adfe0",
-      "checkedAt": "2026-11-02T06:51:59.891Z"
+      "requestId": "f4786935-3225-4613-87e3-537b6abfec97",
+      "checkedAt": "2026-11-02T06:59:08.753Z"
     },
     {
-      "serverId": "icn1::iad1::jmdsn-1793602320252-cd0ac2923648",
+      "serverId": "icn1::iad1::cgvvs-1793602749122-1a0a24b44a7c",
       "note": "",
       "id": "L15",
       "step": 11,
@@ -277,11 +277,11 @@
       "actual": "HTTP 401 LOGIN_REQUIRED",
       "status": "통과",
       "source": "live",
-      "requestId": "ea4bc428-fb24-4da9-953d-0c550090286c",
-      "checkedAt": "2026-11-02T06:52:00.189Z"
+      "requestId": "0fcd4433-4bc0-4bdf-8d06-a887e0fbf36e",
+      "checkedAt": "2026-11-02T06:59:09.062Z"
     },
     {
-      "serverId": "icn1::iad1::mrqdc-1793602320564-5a785df95f8e",
+      "serverId": "icn1::iad1::n2z49-1793602749646-38afeceb2e17",
       "note": "",
       "id": "L16",
       "step": 11,
@@ -293,11 +293,11 @@
       "actual": "HTTP 401 LOGIN_REQUIRED",
       "status": "통과",
       "source": "live",
-      "requestId": "6d9f6814-68de-472a-9a80-9a1957e2633d",
-      "checkedAt": "2026-11-02T06:52:00.500Z"
+      "requestId": "fdc06fb8-fae7-441e-8bab-93cd0ad73d5f",
+      "checkedAt": "2026-11-02T06:59:09.585Z"
     },
     {
-      "serverId": "icn1::mrqdc-1793602320818-f5300d78eddd",
+      "serverId": "icn1::nbcz8-1793602749861-a59ccdd41695",
       "note": "",
       "id": "L17",
       "step": 11,
@@ -309,11 +309,11 @@
       "actual": "HTTP 200, 이름 BYTE BACK 점령된 자료실, standalone",
       "status": "통과",
       "source": "live",
-      "requestId": "96aedbc6-1c34-47c0-9d09-766198a93727",
-      "checkedAt": "2026-11-02T06:52:00.754Z"
+      "requestId": "b5001696-10c5-425e-b791-3c74be59e1d2",
+      "checkedAt": "2026-11-02T06:59:09.801Z"
     },
     {
-      "serverId": "icn1::mrqdc-1793602321038-7083802089d5",
+      "serverId": "icn1::n2z49-1793602750090-f36a2bb51883",
       "note": "",
       "id": "L18",
       "step": 11,
@@ -325,11 +325,11 @@
       "actual": "HTTP 200, 토큰·저장소 문구 0건",
       "status": "통과",
       "source": "live",
-      "requestId": "6689ea60-4ec2-427f-b3df-53046e7dfe36",
-      "checkedAt": "2026-11-02T06:52:00.974Z"
+      "requestId": "4adaa954-198d-46fd-a0c0-0581f1274503",
+      "checkedAt": "2026-11-02T06:59:10.030Z"
     },
     {
-      "serverId": "icn1::mrqdc-1793602321310-d56a1f08da0e",
+      "serverId": "icn1::mrqdc-1793602750321-652988fb91d1",
       "note": "",
       "id": "L19",
       "step": 12,
@@ -338,11 +338,11 @@
       "name": "배포 식별 파일이 열린다",
       "request": "GET /aleph.json",
       "expected": "HTTP 200 + 단계 12 이상·커밋 40자",
-      "actual": "HTTP 200, 단계 12, 커밋 7dcaff6",
+      "actual": "HTTP 200, 단계 12, 커밋 fa8e4a9",
       "status": "통과",
       "source": "live",
-      "requestId": "5b4f43f4-56d0-494c-bbc2-a22a9db55cd1",
-      "checkedAt": "2026-11-02T06:52:01.245Z"
+      "requestId": "be323e19-66ef-4262-bd08-040bef49eb1c",
+      "checkedAt": "2026-11-02T06:59:10.261Z"
     },
     {
       "serverId": null,
@@ -357,8 +357,8 @@
       "actual": "HTTP 401, 메모 0건",
       "status": "통과",
       "source": "live",
-      "requestId": "2824da6e-507c-49ea-a916-c1ca1c6e51df",
-      "checkedAt": "2026-11-02T06:52:01.264Z"
+      "requestId": "1c77d443-43f9-4dcf-bf74-b7155d4793e1",
+      "checkedAt": "2026-11-02T06:59:10.283Z"
     },
     {
       "serverId": null,
@@ -375,7 +375,7 @@
       "status": "통과",
       "source": "live",
       "requestId": "cb6cb3c0-b598-81db-ae46-cd0774a5fc7d",
-      "checkedAt": "2026-11-02T06:52:03.039Z"
+      "checkedAt": "2026-11-02T06:59:11.833Z"
     },
     {
       "serverId": null,
@@ -392,7 +392,7 @@
       "status": "통과",
       "source": "live",
       "requestId": "5410a3c4-e1fd-8502-8ee1-99faa776b433",
-      "checkedAt": "2026-11-02T06:52:03.039Z"
+      "checkedAt": "2026-11-02T06:59:11.833Z"
     },
     {
       "serverId": null,
@@ -426,7 +426,7 @@
       "status": "통과",
       "source": "live",
       "requestId": "d8aa1fb7-402a-80b8-8066-b1fd9bd28dab",
-      "checkedAt": "2026-11-02T06:52:03.039Z"
+      "checkedAt": "2026-11-02T06:59:11.833Z"
     },
     {
       "serverId": null,
@@ -458,8 +458,8 @@
       "actual": "allow approved",
       "status": "통과",
       "source": "local",
-      "requestId": "1d9c4c0d-79ed-4114-815b-a329658a64a0",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "da7b6401-5d72-44e9-9790-57a24383ce08",
+      "checkedAt": "2026-11-02T06:59:11.839Z"
     },
     {
       "serverId": null,
@@ -474,8 +474,8 @@
       "actual": "deny device_not_registered",
       "status": "통과",
       "source": "local",
-      "requestId": "dbd0a9d3-29c2-4cd7-ae50-bff946fe9bac",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "3cce7d79-27c9-4a24-b92c-7c530bbfb2a3",
+      "checkedAt": "2026-11-02T06:59:11.839Z"
     },
     {
       "serverId": null,
@@ -490,8 +490,8 @@
       "actual": "deny device_not_registered",
       "status": "통과",
       "source": "local",
-      "requestId": "b2250c86-f9a4-421a-9a71-9df5c632b83d",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "adc5e4f1-fd03-4041-a0e2-51b6caedbeed",
+      "checkedAt": "2026-11-02T06:59:11.839Z"
     },
     {
       "serverId": null,
@@ -506,8 +506,8 @@
       "actual": "step_up step_up_required",
       "status": "통과",
       "source": "local",
-      "requestId": "d7e13c1c-8597-477e-bd24-36fb10a5e455",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "52baab7d-6dbd-4ecc-8a00-95887fbaa12f",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -522,8 +522,8 @@
       "actual": "allow approved",
       "status": "통과",
       "source": "local",
-      "requestId": "c27d0e7a-8888-4061-b698-f5392b452c23",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "eda6621a-ba3d-4bea-ad16-45e900ab46d7",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -538,8 +538,8 @@
       "actual": "allow approved",
       "status": "통과",
       "source": "local",
-      "requestId": "bcd88c81-2de6-4202-8850-4a96949c59fe",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "7fd95941-a0a2-4138-a0c5-adae7b438529",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -554,8 +554,8 @@
       "actual": "allow approved",
       "status": "통과",
       "source": "local",
-      "requestId": "e16295d0-360d-4759-8d66-0bf5e7ab5878",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "84cb5ef6-3128-40e9-9326-c015cc12eb2f",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -570,8 +570,8 @@
       "actual": "deny resource_not_allowed",
       "status": "통과",
       "source": "local",
-      "requestId": "5b13b734-4557-4fa2-ab3e-30acaf97cbe4",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "a15c2875-b156-4f5f-834d-6e01d4c92335",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -586,8 +586,8 @@
       "actual": "deny resource_not_allowed",
       "status": "통과",
       "source": "local",
-      "requestId": "d1397fc4-d554-4eae-89ea-e83df3f59f37",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "62af9140-2095-47e2-8ce5-6b222dd72b5d",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -602,8 +602,8 @@
       "actual": "allow approved",
       "status": "통과",
       "source": "local",
-      "requestId": "b58e967c-6a47-4aa6-94a8-110d7a0d6e66",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "3aa30f30-e2a6-4d40-8ea1-3adf80407a63",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -618,8 +618,8 @@
       "actual": "deny resource_not_allowed",
       "status": "통과",
       "source": "local",
-      "requestId": "9526f3ce-6f4a-4a74-b29b-4a3cb484e0d6",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "209e2066-07b4-484c-bb14-bdc8617eed6b",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -634,8 +634,8 @@
       "actual": "deny resource_not_allowed",
       "status": "통과",
       "source": "local",
-      "requestId": "5e98e42f-1124-41c7-955c-83179390ffc9",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "2f42cd10-63f5-4d29-a384-81b3ce9db879",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -650,8 +650,8 @@
       "actual": "deny resource_not_allowed",
       "status": "통과",
       "source": "local",
-      "requestId": "fe9b476b-033f-4a79-a9a0-159c13546f05",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "eb07d163-3464-4b66-8018-2b2ad91f4ee3",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -666,8 +666,8 @@
       "actual": "deny resource_not_allowed",
       "status": "통과",
       "source": "local",
-      "requestId": "2293cab4-2a3f-442c-8010-75b8c47d8594",
-      "checkedAt": "2026-11-02T06:52:03.043Z"
+      "requestId": "c8539cd8-4fbe-4264-a15b-cd1cdd4d47e3",
+      "checkedAt": "2026-11-02T06:59:11.840Z"
     },
     {
       "serverId": null,
@@ -682,8 +682,8 @@
       "actual": "observe",
       "status": "통과",
       "source": "local",
-      "requestId": "ab25d0d1-af02-4d11-a372-f14214fe3050",
-      "checkedAt": "2026-11-02T06:52:03.053Z"
+      "requestId": "52e891d8-0c78-4a2a-9c2b-f6e97d227726",
+      "checkedAt": "2026-11-02T06:59:11.848Z"
     },
     {
       "serverId": null,
@@ -698,8 +698,8 @@
       "actual": "observe",
       "status": "통과",
       "source": "local",
-      "requestId": "a57c51f9-4047-437c-893a-ec22e2804aa5",
-      "checkedAt": "2026-11-02T06:52:03.053Z"
+      "requestId": "33c44d7a-4c78-4bb4-a09a-760b08106481",
+      "checkedAt": "2026-11-02T06:59:11.848Z"
     },
     {
       "serverId": null,
@@ -714,8 +714,8 @@
       "actual": "propose_revocation burst_read learner_fixture",
       "status": "통과",
       "source": "local",
-      "requestId": "bdda44fc-289e-4fa2-8b02-68f5f5bf048f",
-      "checkedAt": "2026-11-02T06:52:03.053Z"
+      "requestId": "ecca4c1e-ff9c-4c98-89de-a26f8e7c80b6",
+      "checkedAt": "2026-11-02T06:59:11.848Z"
     },
     {
       "serverId": null,
@@ -730,8 +730,8 @@
       "actual": "propose_revocation burst_read learner_fixture",
       "status": "통과",
       "source": "local",
-      "requestId": "282f7903-82b5-4c9f-854b-542446d011f6",
-      "checkedAt": "2026-11-02T06:52:03.053Z"
+      "requestId": "f3ee9950-6340-40d5-9556-805425bd7b52",
+      "checkedAt": "2026-11-02T06:59:11.849Z"
     },
     {
       "serverId": null,
@@ -746,8 +746,8 @@
       "actual": "observe",
       "status": "통과",
       "source": "local",
-      "requestId": "06353c85-13ec-43a4-bfbd-b4af7da2af68",
-      "checkedAt": "2026-11-02T06:52:03.053Z"
+      "requestId": "d38d59df-0576-469f-b590-a9a6bd038221",
+      "checkedAt": "2026-11-02T06:59:11.849Z"
     },
     {
       "serverId": null,
@@ -762,8 +762,8 @@
       "actual": "observe",
       "status": "통과",
       "source": "local",
-      "requestId": "04c6f978-f5cf-4cf5-a7c6-c9fe31cd6c1c",
-      "checkedAt": "2026-11-02T06:52:03.053Z"
+      "requestId": "99ce08ef-87d0-478e-be78-c630b58fb7e5",
+      "checkedAt": "2026-11-02T06:59:11.849Z"
     },
     {
       "serverId": null,
@@ -778,8 +778,8 @@
       "actual": "2건",
       "status": "통과",
       "source": "local",
-      "requestId": "abf0acd3-5c57-46b9-a490-a33f941ad683",
-      "checkedAt": "2026-11-02T06:52:03.053Z"
+      "requestId": "58b6a414-e883-457b-a6b5-e5d130fa8786",
+      "checkedAt": "2026-11-02T06:59:11.849Z"
     },
     {
       "serverId": null,
@@ -810,8 +810,8 @@
       "actual": "차이 0건",
       "status": "통과",
       "source": "local",
-      "requestId": "7a80ebd5-e1a8-4b02-a6e9-873c0d831e49",
-      "checkedAt": "2026-11-02T06:52:03.055Z"
+      "requestId": "f18ebef6-026e-4805-a930-64a59e2b9cda",
+      "checkedAt": "2026-11-02T06:59:11.851Z"
     },
     {
       "serverId": null,
@@ -826,8 +826,8 @@
       "actual": "바뀐 항목 src/decider.mjs, 복원 뒤 남은 차이 0건, 보존 other-service/rules",
       "status": "통과",
       "source": "local",
-      "requestId": "875942e1-c104-4a1a-9c52-e813cdcde2a6",
-      "checkedAt": "2026-11-02T06:52:03.072Z"
+      "requestId": "2845356f-e12e-4aee-8717-4ffd5bdf9f41",
+      "checkedAt": "2026-11-02T06:59:11.867Z"
     },
     {
       "serverId": null,
@@ -839,11 +839,11 @@
       "name": "저장소의 자동 시험 전체(소유자·역할·판정기·복원·기기 확인)",
       "request": "node --test test/",
       "expected": "실패 0건",
-      "actual": "통과 40건, 실패 0건",
+      "actual": "통과 43건, 실패 0건",
       "status": "통과",
       "source": "local",
-      "requestId": "bdef02c6-d837-46e3-b1c9-41e58567ab02",
-      "checkedAt": "2026-11-02T06:52:03.352Z"
+      "requestId": "f0548913-3925-442c-a52e-5967859f4a5e",
+      "checkedAt": "2026-11-02T06:59:12.163Z"
     },
     {
       "serverId": null,

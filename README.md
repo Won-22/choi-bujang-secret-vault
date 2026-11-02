@@ -112,3 +112,33 @@ DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, 
 **규칙 `burst_read`:** 같은 `identity.sub`의 `GET` 사건이 10분 구간(시작 사건 포함, 10분 미만 간격) 안에 120건을 **넘으면**(121건 이상) `{ action: 'propose_revocation', reasonCode: 'burst_read', subject }`만 돌려주고, 그 밖에는 `{ action: 'observe' }`입니다. 정확히 120건, 10분 밖으로 흩어진 조회, 여러 사용자가 섞인 사건은 합치지 않습니다. 시각 계산은 `at`만 씁니다. 회수 API를 직접 만들거나 기기 권한을 바꾸지 않았고, 판정기(`src/decider.mjs`) 응답 형식도 그대로입니다.
 
 **시험:** `npm run detect:test`가 폭주 묶음(121·200건)은 `propose_revocation`, 정상 묶음(30·120건, 사용자별 100건, 흩어진 200건)은 `observe`로 6건 모두 통과했습니다. `node --test test/`도 통과했습니다. 이 시험은 가상 사건 연습이며 실제 접속 회수나 심판 통과 증거가 아닙니다. 운영 엔진의 사건 전달·접속 회수 연결은 확인하지 않았습니다.
+
+## 10단계: 백업에서 자료실을 되살립니다
+
+**안전 정책(1~9단계 접근 규칙):** `src/decider.mjs`(기기·구역·추가 확인 규칙), `src/resources.mjs`(구역 표), `aleph.config.json`의 `allowedRoutes`, DB 접근 정책(`supabase/notes-rls.sql`, `supabase/notes-lockdown.sql`). 실제 운영 정책은 이 도구가 읽기만 하며 쓰지 않습니다.
+
+**정책 사본·해시·복원 도구** (`scripts/policy-backup.mjs`, 쓰기는 `backup/` 아래에서만):
+
+| 순서 | 명령 | 하는 일 |
+|---|---|---|
+| 1 | `npm run policy -- snapshot` | 현재 정책 사본(`backup/policy-snapshot.json`)과 확인용 해시(`.sha256`) 생성 |
+| 2 | `npm run policy -- verify` | 해시를 확인하고 운영 정책과 사본의 차이 출력(차이 없음이어야 함) |
+| 3 | `npm run policy -- simulate` | 시험 정책(`backup/test-policy.json`, Git 제외) 한 곳의 규칙 한 줄을 바꿔 침공을 흉내 |
+| 4 | `npm run policy -- diff` | 복원할 버전(사본 해시)과 검증한 사본·시험 정책의 **차이만** 출력 |
+| 5 | `npm run policy -- restore` | 실행 전에 복원할 버전과 바뀔 항목, 보존될 항목을 보여 주고 멈춤(미실행) |
+| 6 | `npm run policy -- restore --apply` | 바뀔 항목만 사본으로 되돌림. 다른 서비스 규칙은 그대로 두고 감사 기록(`backup/audit.log`, 덧붙이기만)은 지우지 않음 |
+
+사본이 없거나 해시가 맞지 않으면 모든 명령이 중단됩니다. 이번 실행 결과: 해시 확인 통과, 운영 정책과 사본 차이 없음, 시험 정책에서 `request.deviceRegistered !== true`를 `=== 'never'`로 바꾼 한 줄이 diff에 나왔고, 복원 계획 확인 뒤 `--apply`로 복원해 남은 차이 0건, 보존 항목 `other-service/rules` 유지.
+
+**복원 대상 한 건(시험 계정 B의 가상 메모):** 서비스 `backup`, 경로 `POST /api/backup/restore`, 본문 `{ "id": "<메모 ID>" }`(로그인한 B 본인의 토큰). 비공개 사본 테이블 `notes_backup`(`supabase/notes-backup.sql`, `service_role`만 접근)에서 그 한 건만 되살립니다. 사본 해시(`sha256(title + "\n" + content)`)가 맞지 않으면 중단하고, 남의 사본·남이 가진 ID는 거부합니다. 복원 뒤 ID·소유자·내용 해시를 사본과 대조해 응답(`idMatches`, `ownerMatches`, `hashMatches`)과 감사 기록 `restore_audit`에 남기며 다른 메모는 건드리지 않습니다. 이 경로는 판정기가 허용하는 자료 경로가 아니므로 `allowedRoutes`에 넣지 않았습니다. 복원 대상 메모 ID: **(기록 대기)**
+
+**복구 뒤 1~9단계 재확인 순서**
+1. `npm ci` 후 `npm run decider:test`(기기 정상 allow·미등록 deny, 복합 이상 step_up) — 이번에 실행, 통과
+2. `npm run detect:test`(폭주 propose_revocation, 정상 observe) — 이번에 실행, 통과
+3. `node --test test/`(API 소유자·role·판정기·복원) — 이번에 실행, 통과
+4. `npm run policy -- verify`(운영 정책이 사본과 같은지) — 이번에 실행, 차이 없음
+5. 배포 주소 비로그인 `GET /api/notes`가 401 JSON, `/data.json` 404, anon 키 원본 직접 요청 거부 — `npm run bundle` 자기 점검으로 실행
+6. A·B 화면 로그인, 각자 자기 메모만 보이고 추가·수정·삭제 가능 — 직접 확인 필요(미실행)
+7. B가 A의 메모 id로 요청하면 404 — 직접 확인 필요(미실행)
+
+실행하지 않은 시험은 미실행으로 남기며 결과를 꾸미지 않았습니다.

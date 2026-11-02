@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import config from '../aleph.config.json' with { type: 'json' };
 import { createLoginVerifier } from './verify-login.mjs';
 import { notesApi } from './notes.mjs';
+import { restoreApi } from './restore.mjs';
 
 const COLUMNS = 'id, title, content';
 let runtime;
@@ -12,8 +13,16 @@ function build() {
   const client = createClient(config.identityProvider.issuer.replace(/\/auth\/v1$/u, ''), key,
     { auth: { persistSession: false, autoRefreshToken: false } });
   const notes = () => client.from('notes');
-  return notesApi({
-    authenticate: (request) => verify(request.headers.authorization),
+  const authenticate = (request) => verify(request.headers.authorization);
+  const NOTE = 'id, owner_id, title, content';
+  const restore = restoreApi({ authenticate, db: {
+    getBackup: (id) => client.from('notes_backup').select('note_id, owner_id, title, content, content_sha256').eq('note_id', id).maybeSingle(),
+    getNote: (id) => notes().select(NOTE).eq('id', id).maybeSingle(),
+    upsert: (row) => notes().upsert(row, { onConflict: 'id' }).select(NOTE).single(),
+    audit: (row) => client.from('restore_audit').insert(row),
+  } });
+  return { ...notesApi({
+    authenticate,
     db: {
       list: (owner) => notes().select(COLUMNS).eq('owner_id', owner).order('created_at'),
       get: (id, owner) => notes().select(COLUMNS).eq('id', id).eq('owner_id', owner).maybeSingle(),
@@ -21,7 +30,7 @@ function build() {
       update: (id, owner, fields) => notes().update(fields).eq('id', id).eq('owner_id', owner).select(COLUMNS).maybeSingle(),
       remove: (id, owner) => notes().delete().eq('id', id).eq('owner_id', owner).select('id').maybeSingle(),
     },
-  });
+  }), restore };
 }
 
 export function handler(name) {

@@ -97,7 +97,7 @@ async function checkStep3(app, step, config) {
     { attackId: 'static_data_json_gone', expected: '/data.json에 메모가 없거나 404',
       observed: `GET /data.json: ${old.tag}` },
     { attackId: 'anonymous_list_refused', expected: '로그인 없는 목록 요청은 401/403과 JSON 오류',
-      observed: `GET /api/notes: ${list.tag}${refused ? '' : ' (기대 401/403과 다름)'}` },
+      observed: `GET /api/notes: ${list.tag}${list.sent && !refused ? ' (기대 401/403과 다름)' : ''}` },
     { attackId: 'login_note_flow', expected: 'A 로그인 뒤 메모 추가·수정·삭제 가능',
       observed: 'not_run(미실행): 요청을 보내지 않음, 이 스크립트는 로그인 정보를 쓰지 않아 화면에서 직접 확인함' },
     ...(step >= 5 ? [await checkOriginalApi(config)] : []),

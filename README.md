@@ -90,3 +90,17 @@ DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, 
 **재로그인 계약 확인:** 요청에 엔진이 채우는 `stepUp{verified, authAgeSeconds}`가 있어 계약은 존재합니다. 다만 확인 전 자료를 실제로 막고 새 로그인 뒤 다시 판정하는 일은 제공 엔진이 하며, 이 저장소의 앱은 판정기를 호출하지 않습니다. 그 실제 차단은 **미실행**입니다. 토큰 원문은 기록하지 않습니다.
 
 **시험:** `npm run decider:test`(정상 allow, 미등록 deny, 복합 이상 step_up, 다시 확인 allow), `npm run fixture:7`, `node --test test/`. 로컬 시험은 심판 통과 증거가 아닙니다.
+
+## 8단계: 자료마다 갈 수 있는 구역을 나눕니다
+
+**자원 ID** (`src/resources.mjs`): 메모 `memo.item`, 반 공지 `class.notice`, 강사 자료 `instructor.material`. 메모 API 응답에는 `X-Resource-Id`(`memo.item`, 목록·추가는 `memo.item.collection`)가 붙어 요청마다 구역을 구별할 수 있습니다.
+
+**판정기 규칙 `resource_zone`** (`src/decider.mjs`): 서비스와 정확한 경로 모양이 구역 표에 있고 실제 `path`가 그 모양과 같을 때만 통과합니다. 아니면 `deny`(`resource_not_allowed`)입니다.
+- 메모: `GET·PUT·DELETE /notes/:id`처럼 ID 하나를 고르는 경로만 허용합니다. ID 없는 목록·추가 경로는 거부하고, ID 형식(UUID 여부)은 좁히지 않습니다.
+- 반 공지: `GET /announcements`, `GET /announcements/:id`만 허용합니다. 쓰기(POST·PUT·PATCH·DELETE)는 모두 거부하며 수정은 서버의 관리 경로에서 처리합니다.
+- 강사 자료: 허용 경로가 없어 모두 거부합니다. 알 수 없는 경로, 쿼리가 있는 요청(`queryLength` 0이 아님), `:id` 자리에 `export` 같은 기능 이름이 온 경우도 거부합니다. 메모 주인 비교는 판정기에 넣지 않았습니다.
+- 앞 단계 규칙(`device_registered`, `step_up_required`)은 그대로이며 순서는 기기 → 구역 → 추가 확인입니다. 새 이유 코드 `resource_not_allowed`는 운영 등록부에 없으면 엔진이 허용으로 쓰지 않습니다(거부로 처리).
+
+**API 재확인** (`src/notes.mjs`): 검증된 사용자 ID와 DB의 `owner_id`를 계속 대조하고, 본문의 `role`·`isInstructor`는 믿지 않고 `403 ROLE_NOT_TRUSTED`로 거부합니다. 이 저장소에는 반 공지·강사 자료 API가 없어 메뉴를 우회한 직접 요청에서도 다른 구역 자료가 나올 길이 없습니다. 저장된 강사 권한 대조는 그런 API가 생길 때 필요하며 지금은 해당 없음입니다.
+
+**allowedRoutes:** 판정기가 허용하고 실제로 있는 `GET·PUT·DELETE /api/notes/:id` 세 개입니다(목록·추가 경로는 판정기가 거부해 뺐습니다).

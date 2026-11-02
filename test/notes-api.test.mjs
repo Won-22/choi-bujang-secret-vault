@@ -20,7 +20,7 @@ function fake() {
   const api = notesApi({ db, authenticate: async (r) => (r.headers.authorization ? { userId: r.headers.authorization.slice(7) === 'B' ? B : A } : null) });
   const call = async (name, method, { query, body, auth = true, as = 'x' } = {}) => {
     const out = {};
-    const response = { setHeader() {}, status(code) { out.status = code; return { json(b) { out.body = b; } }; } };
+    const response = { setHeader(k, v) { (out.headers ??= {})[k.toLowerCase()] = v; }, status(code) { out.status = code; return { json(b) { out.body = b; } }; } };
     await api[name]({ method, query, body, headers: auth ? { authorization: `Bearer ${as}` } : {} }, response);
     return out;
   };
@@ -29,7 +29,8 @@ function fake() {
 
 test('로그인 없이는 목록·추가가 401 JSON으로 거부된다', async () => {
   const { call } = fake();
-  assert.deepEqual(await call('collection', 'GET', { auth: false }), { status: 401, body: { error: 'LOGIN_REQUIRED' } });
+  const { status, body } = await call('collection', 'GET', { auth: false });
+  assert.deepEqual({ status, body }, { status: 401, body: { error: 'LOGIN_REQUIRED' } });
   assert.equal((await call('collection', 'POST', { auth: false, body: { title: 't', body: 'b' } })).status, 401);
 });
 
@@ -63,4 +64,12 @@ test('B는 A의 메모를 읽거나 고치거나 지울 수 없고 소유자를 
   assert.equal((await call('collection', 'POST', { as: 'B', body: { title: 't', body: 'b', owner_id: A } })).status, 403);
   assert.equal((await call('item', 'PUT', { query: { id }, body: { title: 't', body: 'b', owner_id: B } })).status, 403);
   assert.equal((await call('item', 'GET', { query: { id } })).body.body, '비밀');
+});
+
+test('본문의 role은 믿지 않고 거부하며, 응답에 자원 ID가 붙는다', async () => {
+  const { call } = fake();
+  assert.deepEqual((await call('collection', 'POST', { body: { title: 't', body: 'b', role: 'instructor' } })).body, { error: 'ROLE_NOT_TRUSTED' });
+  const { id } = (await call('collection', 'POST', { body: { title: 't', body: 'b' } })).body;
+  assert.equal((await call('item', 'PUT', { query: { id }, body: { title: 't', body: 'b', isInstructor: true } })).status, 403);
+  assert.equal((await call('item', 'GET', { query: { id } })).headers['x-resource-id'], 'memo.item');
 });

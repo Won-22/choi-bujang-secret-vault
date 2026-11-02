@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { RESOURCES } from './resources.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const show = (row) => ({ id: row.id, title: row.title, body: row.content });
@@ -21,9 +22,14 @@ function readFields(raw) {
 const claimsOtherOwner = (raw, userId) => ['owner_id', 'ownerId', 'userId']
   .some((key) => raw && typeof raw === 'object' && key in raw && raw[key] !== userId);
 
+// 화면 메뉴나 본문의 role은 권한 근거가 아니다. 보내면 거부한다.
+const claimsRole = (raw) => raw && typeof raw === 'object'
+  && ['role', 'roles', 'isInstructor', 'instructor'].some((key) => key in raw);
+
 // authenticate(request) → { userId } | null,  db → 메모 저장소(Supabase 서버 클라이언트를 감싼 것)
 export function notesApi({ authenticate, db }) {
-  async function guard(request, response, methods) {
+  async function guard(request, response, methods, resource) {
+    response.setHeader('X-Resource-Id', resource);
     if (!methods.includes(request.method)) {
       response.setHeader('Allow', methods.join(', '));
       send(response, 405, { error: 'METHOD_NOT_ALLOWED' });
@@ -44,13 +50,14 @@ export function notesApi({ authenticate, db }) {
 
   return {
     async collection(request, response) {
-      const user = await guard(request, response, ['GET', 'POST']);
+      const user = await guard(request, response, ['GET', 'POST'], RESOURCES.memo.id + '.collection');
       if (!user) return;
       if (request.method === 'GET') {
         const { data, error } = await db.list(user.userId);
         return error ? fail(response, error) : send(response, 200, data.map(show));
       }
       if (claimsOtherOwner(request.body, user.userId)) return send(response, 403, { error: 'OWNER_MISMATCH' });
+      if (claimsRole(request.body)) return send(response, 403, { error: 'ROLE_NOT_TRUSTED' });
       const fields = readFields(request.body);
       const id = request.body?.id === undefined ? randomUUID() : request.body.id;
       if (!fields || typeof id !== 'string' || !UUID.test(id)) {
@@ -62,7 +69,7 @@ export function notesApi({ authenticate, db }) {
 
     // 남의 메모는 없는 것처럼 404로 답한다(존재 여부도 알려 주지 않음).
     async item(request, response) {
-      const user = await guard(request, response, ['GET', 'PUT', 'DELETE']);
+      const user = await guard(request, response, ['GET', 'PUT', 'DELETE'], RESOURCES.memo.id);
       if (!user) return;
       const id = String(request.query?.id ?? '').toLowerCase();
       if (!UUID.test(id)) return send(response, 404, { error: 'NOT_FOUND' });
@@ -71,6 +78,7 @@ export function notesApi({ authenticate, db }) {
         result = await db.get(id, user.userId);
       } else if (request.method === 'PUT') {
         if (claimsOtherOwner(request.body, user.userId)) return send(response, 403, { error: 'OWNER_MISMATCH' });
+        if (claimsRole(request.body)) return send(response, 403, { error: 'ROLE_NOT_TRUSTED' });
         const fields = readFields(request.body);
         if (!fields) return send(response, 400, { error: 'INVALID_NOTE' });
         result = await db.update(id, user.userId, fields);

@@ -1,6 +1,8 @@
 // ALEPH SDP 엔진이 확인한 요청만 받는 학생 판정기입니다.
 // 요청 본문의 userId, role, 기기 키, 토큰을 별도로 믿거나 저장하지 마세요. 계약은 docs/DECIDER_REQUEST.md입니다.
-export const RULE_IDS = Object.freeze(['device_registered', 'step_up_required']);
+import { resourceFor } from './resources.mjs';
+
+export const RULE_IDS = Object.freeze(['device_registered', 'resource_zone', 'step_up_required']);
 
 // 엔진이 검증해 넘긴 접속 정보의 출처. 실제 경로의 'none'과 그 밖의 값은 근거로 쓰지 않는다.
 const TRUSTED_SOURCES = ['judge_fixture'];
@@ -32,12 +34,27 @@ function compoundRisk(request) {
 const recentlyVerified = (stepUp) => stepUp?.verified === true
   && Number.isInteger(stepUp.authAgeSeconds) && stepUp.authAgeSeconds >= 0 && stepUp.authAgeSeconds <= 900;
 
+// 8단계: 자원 구역. 서비스와 정확한 경로 모양이 구역 표(src/resources.mjs)에 있어야 하고, 실제 path가 그 모양과 같아야 한다.
+// 쿼리는 어떤 기능도 고르지 못하므로 있으면 거부한다. :id 자리에 export 같은 기능 이름이 오면 거부한다. ID 형식(UUID 여부)은 좁히지 않는다.
+const FUNCTION_NAMES = ['export', 'import', 'search', 'list', 'all', 'bulk', 'count', 'admin'];
+const stripApi = (route) => route.replace(/^([A-Z]+) \/api\//u, '$1 /');
+function inZone(request) {
+  if (typeof request.route !== 'string' || typeof request.path !== 'string' || request.queryLength !== 0) return false;
+  const route = stripApi(request.route);
+  if (!resourceFor(request.service, route)) return false;
+  const parts = request.path.replace(/^\/api(?=\/)/u, '').split('/').slice(1);
+  const shape = route.split(' ')[1].split('/').slice(1);
+  return parts.length === shape.length && shape.every((seg, i) => (seg === ':id'
+    ? parts[i] !== '' && !FUNCTION_NAMES.includes(parts[i].toLowerCase()) : seg === parts[i]));
+}
+
 const answer = (request, decision, reasonCode, ruleId) => ({
   schema: 'aleph.decision.v1', requestId: request.requestId, decision, reasonCode, ruleIds: [ruleId],
 });
 
 export async function decide(request) {
   if (request.deviceRegistered !== true) return answer(request, 'deny', 'device_not_registered', 'device_registered');
+  if (!inZone(request)) return answer(request, 'deny', 'resource_not_allowed', 'resource_zone');
   if (compoundRisk(request) && !recentlyVerified(request.stepUp)) {
     return answer(request, 'step_up', 'step_up_required', 'step_up_required');
   }

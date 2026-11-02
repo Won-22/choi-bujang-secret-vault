@@ -110,6 +110,7 @@ async function checkStep3(app, step, config) {
   const attempts = [
     await anonymousGet(app, '/data.json', 'static_data_json_gone', '2단계: 로그인 없는 GET /data.json에 메모가 없거나 404'),
     await anonymousGet(app, '/api/notes', 'anonymous_list_refused', '3단계: 로그인 없는 GET /api/notes는 401/403과 JSON 오류'),
+    await anonymousGet(app, '/api/session', 'anonymous_session_probe', '3단계: 로그인 없는 GET /api/session은 401/403/405로 거부(세션을 읽을 수 없음)'),
   ];
   if (step >= 4) attempts.push(await anonymousGet(app, `/api/notes/${ITEM}`, 'anonymous_item_refused', '4단계: 로그인 없는 GET /api/notes/:id는 401/403'));
   if (step >= 5) attempts.push(await checkOriginalApi(config));

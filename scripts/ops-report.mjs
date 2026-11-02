@@ -105,7 +105,7 @@ for (const item of evidence) {
   const id = /request_id=([0-9a-f-]{36})/u.exec(item.observed)?.[1] ?? null;
   const code = /HTTP (\d{3})/u.exec(item.observed)?.[1] ?? null;
   const seen = /server_observed=(\d{3})/u.exec(item.observed)?.[1] ?? null;
-  const expectedCode = { static_data_json_gone: ['404'], anonymous_list_refused: ['401', '403'], anonymous_item_refused: ['401', '403'], anonymous_device_refused: ['401', '403'], original_api_direct: ['401', '403'] }[item.attackId];
+  const expectedCode = { static_data_json_gone: ['404'], anonymous_list_refused: ['401', '403'], anonymous_item_refused: ['401', '403'], anonymous_device_refused: ['401', '403'], anonymous_session_probe: ['401', '403', '405'], original_api_direct: ['401', '403'] }[item.attackId];
   const sent = Boolean(id && code);
   const stepOf = Number(/^(\d+)단계/u.exec(item.expected)?.[1] ?? 12);
   const row = { attackId: item.attackId, id: `A${String(rows.filter((r) => r.attackId).length + 1).padStart(2, '0')}`, step: stepOf, group: 'api', kind: 'forbidden',

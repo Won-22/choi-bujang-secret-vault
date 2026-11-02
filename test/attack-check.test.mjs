@@ -44,6 +44,7 @@ test('요청마다 randomUUID()로 만든 ID를 보내고 실제 상태와 서�
   assert.equal(o.anonymous_list_refused, `HTTP 401, request_id=${idOf('/api/notes')}, server_observed=401`);
   assert.match(o.anonymous_item_refused, /^HTTP 401, request_id=[0-9a-f-]{36}, server_observed=401$/u);
   assert.match(o.anonymous_device_refused, /^HTTP 401, request_id=[0-9a-f-]{36}, server_observed=401$/u);
+  assert.match(o.anonymous_session_probe, /^HTTP 401, request_id=[0-9a-f-]{36}, server_observed=401$/u);
   assert.ok(out.length >= 12 && out.length <= 20);
   assert.equal(new Set(out.map((x) => x.attackId)).size, out.length);
 });

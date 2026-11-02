@@ -67,3 +67,16 @@ DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, 
 브라우저의 메모 읽기·추가·수정·삭제는 모두 Vercel 서버 함수(`/api/notes`)를 거칩니다. 화면 코드에는 Supabase 자료를 직접 부르는 곳이 없습니다(로그인 Auth 호출만 있었습니다). `supabase/notes-lockdown.sql`은 `PUBLIC`·`anon`·`authenticated`의 `notes` 직접 권한을 거두고, 서버 함수가 쓰는 `service_role`은 유지합니다. 원본 자료 주소는 `aleph.config.json`의 `originalApiUrl`입니다. SQL 적용 전후 권한은 파일 안의 `has_table_privilege` 쿼리로 대조합니다. **이 SQL은 학생이 직접 검토해 실행하며, 적용 여부는 코드로 확인되지 않습니다.**
 
 **화면 코드에 공개 키 없음(가점):** 로그인·토큰 갱신·로그아웃도 서버 함수 `api/session.js`가 Supabase 공식 SDK로 대신 처리합니다. 브라우저는 `/api/...`만 부르고 `sb_publishable_` 키를 갖지 않습니다. 서버에는 Vercel 환경변수 `SUPABASE_PUBLISHABLE_KEY`(공개용)와 `SUPABASE_SECRET_KEY`(서버 전용)가 필요합니다. 로그인이 깨지면 이 커밋만 되돌립니다.
+
+## 6단계: 등록한 기기만 자료실에
+
+**요청 항목 설명** (`docs/DECIDER_REQUEST.md`): 사용자는 `subjectId`(발급자·대상·반·프로젝트를 묶은 가명 ID)로만 들어오고, 브라우저가 보낸 userId·역할은 요청에 없습니다. 기기 등록 여부는 엔진이 확인해 넘기는 최상위 `deviceRegistered`(true/false)입니다. 동작과 경로는 `method`, `path`, `route`입니다. 인증서·CA·서명 키는 만들지 않았고 Git에도 없습니다.
+
+**규칙:** `src/decider.mjs`의 `device_registered`는 `deviceRegistered === true`일 때만 `allow`(`approved`)하고, `false`·없음·그 밖의 값은 `deny`와 `device_not_registered`로 거부합니다. `RULE_IDS`에는 이 규칙 하나만 있고 다른 규칙은 없습니다. 기존 자료실 주소와 화면은 바꾸지 않았습니다.
+
+**확인 순서:**
+1. `npm ci`
+2. `npm run decider:test` — "통과 · 등록 기기의 정상 요청"과 "통과 · 미등록 기기의 가상 요청"(`deny`·`device_not_registered`)이 모두 보여야 합니다.
+3. `node --test test/` — 등록·미등록·값 없음·`'true'`·`1` 요청을 다룹니다.
+
+로컬 시험은 가상 요청 연습이며 심판 판정이나 실제 접속 증거가 아닙니다. 미등록 기기 공격은 심판이 확인하며, 따로 설치할 접속 프로그램은 없습니다.

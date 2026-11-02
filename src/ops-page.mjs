@@ -7,7 +7,7 @@ const GROUPS = ['rules', 'detect', 'revocation', 'restore', 'api', 'app'];
 const FORBIDDEN_KEYS = ['title', 'content', 'body', 'token', 'password', 'secret'];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/u;
-const ROW_KEYS = ['id', 'step', 'group', 'kind', 'name', 'request', 'expected', 'actual', 'status', 'source', 'requestId', 'serverId', 'checkedAt', 'note'];
+const ROW_KEYS = ['attackId', 'id', 'step', 'group', 'kind', 'name', 'request', 'expected', 'actual', 'status', 'source', 'requestId', 'serverId', 'checkedAt', 'note'];
 
 export const countBy = (rows) => Object.fromEntries(STATUSES.map((s) => [s, rows.filter((r) => r.status === s).length]));
 
@@ -37,6 +37,14 @@ export function validateReport(report) {
     if (row.status === '직접 확인' && row.source !== 'manual') problems.push(`${where}: 직접 확인은 manual 출처여야 합니다.`);
     if (row.status === '미실행' && (row.source !== 'not_run' || row.actual !== '미실행' || typeof row.note !== 'string' || row.note.length < 5)) problems.push(`${where}: 미실행은 이유가 필요하고 실제 결과를 적을 수 없습니다.`);
     if (row.source === 'not_run' && row.status !== '미실행') problems.push(`${where}: 실행하지 않은 시험을 통과 처리할 수 없습니다.`);
+  }
+  // 자기 점검(attack-check)의 원문 observed와 같은 점검의 행(attackId)이 같은 요청 ID·HTTP 상태를 가져야 한다.
+  for (const item of report.attackEvidence ?? []) {
+    const id = /request_id=([0-9a-f-]{36})/u.exec(item.observed ?? '')?.[1];
+    const status = /HTTP (\d{3})/u.exec(item.observed ?? '')?.[1];
+    const row = report.rows.find((r) => r.attackId === item.attackId);
+    if (id && (!row || row.requestId !== id || row.actual !== `HTTP ${status}`)) problems.push(`점검 ${item.attackId}의 observed와 보고서 행이 맞지 않습니다.`);
+    if (!id && row && row.status !== '미실행') problems.push(`점검 ${item.attackId}는 요청 ID가 없는데 보고서에는 실측으로 적혀 있습니다.`);
   }
   const counts = countBy(report.rows);
   for (const status of STATUSES) if (report.summary?.[status] !== counts[status]) problems.push(`요약의 ${status} 수치가 행과 맞지 않습니다.`);
@@ -108,6 +116,9 @@ h1{font-size:clamp(28px,6vw,42px);margin:8px 0}h2{margin:0 0 6px;font-size:20px}
 </div>
 <p>기록 시각 ${esc(report.generatedAt)} · 확인한 주소 ${esc(report.baseUrl)} · 검사한 배포 커밋 <code>${esc(report.inspectedCommit)}</code>(<code>/aleph.json</code> 기준) · 단계 ${esc(report.deployedStep)} · 정책 사본 해시 <code>${esc(report.policySnapshotHash)}</code></p>
 ${panels}
+<h2>자기 점검(attack-check) 원문</h2>
+<p>npm run bundle이 쓰는 점검과 같은 코드의 observed 원문입니다. 점검마다 요청 ID가 고정되어 있어 번들 기록과 이 보고서의 값이 같습니다.</p>
+<ul>${(report.attackEvidence ?? []).map((e) => `<li><code>${esc(e.attackId)}</code> — ${esc(e.observed)}</li>`).join('')}</ul>
 <h2>전체 시험표</h2>
 <div class="wrap"><table>
 <thead><tr><th>번호</th><th>단계</th><th>구분</th><th>시험</th><th>기대 결과</th><th>실제 결과</th><th>상태</th><th>요청 ID</th><th>확인 시각</th><th>비고</th></tr></thead>

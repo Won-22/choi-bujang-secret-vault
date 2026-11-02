@@ -1,16 +1,26 @@
-import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 
-// 보내는 GET마다 새 요청 ID를 붙이고(x-request-id), 실제로 받은 HTTP 상태와 같은 ID를 observed에 적는다.
-// 응답을 받지 못했거나 보내지 않은 점검은 상태를 지어내지 않고 not_run(미실행)으로 적는다.
-async function sendGet(url, headers = {}) {
-  const requestId = randomUUID();
+// 점검마다 고정된 요청 ID(이름 기반 UUID v5). 번들·보고서(ops/report.json)·심판이 같은 점검을 같은 ID로 볼 수 있다. 점검끼리는 서로 다른 ID다.
+const NAMESPACE = Buffer.from('6ba7b8109dad11d180b400c04fd430c8', 'hex');
+export function checkRequestId(name) {
+  const bytes = createHash('sha1').update(NAMESPACE).update(`aleph-defense-check:${name}`).digest().subarray(0, 16);
+  bytes[6] = (bytes[6] & 0x0f) | 0x50;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = bytes.toString('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
+
+// 보내는 GET마다 요청 ID(x-request-id)를 붙이고, 실제로 받은 HTTP 상태와 같은 ID를 observed에 적는다.
+// 응답을 받지 못했거나 보내지 않은 점검은 상태와 ID를 지어내지 않고 not_run(미실행)으로 적는다.
+async function sendGet(url, headers = {}, name = 'check') {
+  const requestId = checkRequestId(name);
   try {
     const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId, 'x-aleph-request-id': requestId },
       redirect: 'error', signal: AbortSignal.timeout(10000) });
     return { response, status: response.status, requestId, sent: true, tag: `HTTP ${response.status}, request_id=${requestId}` };
   } catch (error) {
-    return { response: null, status: null, requestId, sent: false,
-      tag: `not_run: 응답을 받지 못해 상태를 적지 않음, request_id=${requestId}` };
+    return { response: null, status: null, requestId: null, sent: false,
+      tag: `not_run: 응답을 받지 못해 상태와 요청 ID를 적지 않음(${error.cause?.code ?? error.message})` };
   }
 }
 
@@ -31,7 +41,7 @@ export async function runAttackChecks(config) {
   if (typeof config.sampleMarker !== 'string' || !config.sampleMarker) throw new Error('가상 메모의 확인 표시를 넣어 주세요.');
   if (config.step === 2) return checkStep2(app, config);
   if (config.step >= 3) return checkStep3(app, config.step, config);
-  const sent = await sendGet(new URL('/data.json', app));
+  const sent = await sendGet(new URL('/data.json', app), {}, 'anonymous_note_read');
   const response = sent.response;
   let visible = false;
   if (response?.ok) {
@@ -49,7 +59,7 @@ export async function runAttackChecks(config) {
 
 // 2단계: 옛 공개 파일은 사라졌는지, 새 서버 API는 아직 누구에게나 열려 있는지 비로그인으로 확인한다.
 async function checkStep2(app, config) {
-  const get = (path) => sendGet(new URL(path, app));
+  const get = (path, name) => sendGet(new URL(path, app), {}, name);
   const count = async (response) => {
     if (!response?.ok) return 0;
     try {
@@ -59,9 +69,9 @@ async function checkStep2(app, config) {
       return 0;
     }
   };
-  const old = await get('/data.json');
+  const old = await get('/data.json', 'static_data_json_gone');
   const oldCount = await count(old.response);
-  const api = await get('/api/notes');
+  const api = await get('/api/notes', 'public_api_still_open');
   const apiCount = await count(api.response);
   return [
     { attackId: 'static_data_json_gone', expected: '/data.json에 메모가 없거나 404',
@@ -73,9 +83,9 @@ async function checkStep2(app, config) {
 
 // 3단계: 로그인 없이 목록을 부르면 401/403 JSON으로 거부되는지 확인한다. 로그인한 A 계정의 흐름은 직접 확인한다.
 async function checkStep3(app, step, config) {
-  const get = (path) => sendGet(new URL(path, app));
-  const old = await get('/data.json');
-  const list = await get('/api/notes');
+  const get = (path, name) => sendGet(new URL(path, app), {}, name);
+  const old = await get('/data.json', 'static_data_json_gone');
+  const list = await get('/api/notes', 'anonymous_list_refused');
   let jsonError = false;
   try {
     jsonError = typeof (await list.response?.json())?.error === 'string';
@@ -103,7 +113,7 @@ async function checkOriginalApi(config) {
     return { attackId: 'original_api_direct', expected: '공개 키로 원본 자료를 직접 불러도 메모가 없음',
       observed: 'not_run(미실행): 요청을 보내지 않음, SUPABASE_PUBLISHABLE_KEY 환경변수가 없음' };
   }
-  const sent = await sendGet(config.originalApiUrl, { apikey: key });
+  const sent = await sendGet(config.originalApiUrl, { apikey: key }, 'original_api_direct');
   let rows = 0;
   try {
     const data = await sent.response?.json();

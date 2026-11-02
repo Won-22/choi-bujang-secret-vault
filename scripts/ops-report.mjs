@@ -94,6 +94,20 @@ if (KEY) {
   skip('L20', 5, 'api', '공개 키로 원본 자료를 직접 요청', 'GET originalApiUrl (apikey: 공개 키)', 'HTTP 401·403 또는 메모 0건', 'SUPABASE_PUBLISHABLE_KEY 환경변수가 없어 보내지 않았습니다.', 'forbidden');
 }
 
+// ── 자기 점검(src/attack-check.mjs): 번들이 쓰는 코드를 그대로 실행하고 observed 원문과 연결된 행을 기록 ─────────
+const { runAttackChecks } = await import('../src/attack-check.mjs');
+const evidence = await runAttackChecks(config);
+for (const item of evidence) {
+  const id = /request_id=([0-9a-f-]{36})/u.exec(item.observed)?.[1] ?? null;
+  const code = /HTTP (\d{3})/u.exec(item.observed)?.[1] ?? null;
+  const expectedCode = { static_data_json_gone: ['404'], anonymous_list_refused: ['401', '403'], original_api_direct: ['401', '403'] }[item.attackId];
+  const sent = Boolean(id && code);
+  add({ attackId: item.attackId, id: `A${String(rows.filter((r) => r.attackId).length + 1).padStart(2, '0')}`, step: 12, group: 'api', kind: 'forbidden',
+    name: `자기 점검 ${item.attackId}`, request: 'src/attack-check.mjs의 runAttackChecks', expected: item.expected,
+    actual: sent ? `HTTP ${code}` : '미실행', status: !sent ? '미실행' : expectedCode?.includes(code) ? '통과' : '실패', source: sent ? 'live' : 'not_run',
+    requestId: sent ? id : null, checkedAt: sent ? now() : null, note: sent ? '번들이 쓰는 점검과 같은 코드, observed 원문은 attackEvidence에 있음' : item.observed.replace(/^not_run\(미실행\):\s*/u, '') });
+}
+
 // ── 판정기 규칙: 가상 요청으로 실제 decide()를 실행 ─────────────────────────────────
 const { decide, RULE_IDS } = await import('../src/decider.mjs');
 const { normal, suspicious } = fixtureRequests();
@@ -205,6 +219,7 @@ const report = {
   inspectedCommit: (() => { try { return JSON.parse(identity?.text ?? '{}').commit ?? '확인하지 못함'; } catch { return '확인하지 못함'; } })(),
   deployedStep: (() => { try { return JSON.parse(identity?.text ?? '{}').step ?? '확인하지 못함'; } catch { return '확인하지 못함'; } })(),
   policySnapshotHash: snapshotHash,
+  attackEvidence: evidence,
   summary: { ...countBy(rows), total: rows.length }, rows,
 };
 const problems = validateReport(report);

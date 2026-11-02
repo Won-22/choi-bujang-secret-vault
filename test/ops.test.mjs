@@ -53,3 +53,24 @@ test('로그인 시험 결과를 합치면 옛 미실행 행이 빠지고 수치
   assert.equal(merged.summary['미실행'], 0);
   assert.equal(merged.summary['실패'], 1);
 });
+
+test('점검 요청 ID는 점검마다 고정되고 서로 다르며 UUID v5 모양이다', async () => {
+  const { checkRequestId } = await import('../src/attack-check.mjs');
+  const a = checkRequestId('static_data_json_gone');
+  assert.equal(a, checkRequestId('static_data_json_gone'));
+  assert.notEqual(a, checkRequestId('anonymous_list_refused'));
+  assert.match(a, /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u);
+});
+
+test('점검 원문(observed)과 보고서 행의 요청 ID·상태가 다르면 거부한다', () => {
+  const row = { ...base, id: 'A01', attackId: 'static_data_json_gone', actual: 'HTTP 404', requestId: UUID };
+  const ok = { ...report([row]), attackEvidence: [{ attackId: 'static_data_json_gone', expected: 'x', observed: `GET /data.json: HTTP 404, request_id=${UUID}` }] };
+  assert.deepEqual(validateReport(ok), []);
+  assert.match(renderOps(ok), /자기 점검\(attack-check\) 원문/u);
+  const otherId = { ...ok, attackEvidence: [{ ...ok.attackEvidence[0], observed: 'GET /data.json: HTTP 404, request_id=44444444-4444-5444-8444-444444444444' }] };
+  assert.ok(validateReport(otherId).length > 0);
+  const otherStatus = { ...ok, attackEvidence: [{ ...ok.attackEvidence[0], observed: `GET /data.json: HTTP 200, request_id=${UUID}` }] };
+  assert.ok(validateReport(otherStatus).length > 0);
+  const noId = { ...ok, attackEvidence: [{ ...ok.attackEvidence[0], observed: 'not_run: 응답을 받지 못함' }] };
+  assert.ok(validateReport(noId).length > 0);
+});

@@ -75,3 +75,24 @@ test('점검 원문(observed)과 보고서 행의 요청 ID·상태가 다르면
   const noId = { ...ok, attackEvidence: [{ ...ok.attackEvidence[0], observed: 'not_run: 응답을 받지 못함' }] };
   assert.ok(validateReport(noId).length > 0);
 });
+
+test('점검은 응답이 돌려준 요청 ID가 있으면 그 값을, 없으면 보낸 ID를 기록하고 응답이 없으면 not_run', async () => {
+  const { runAttackChecks, checkRequestId } = await import('../src/attack-check.mjs');
+  const config = { step: 12, publicAppUrl: 'https://student-defense.vercel.app/', sampleMarker: 'SAMPLE_NOTE_1', judgeIssuer: 'https://x.up.railway.app/defense/judge' };
+  const real = globalThis.fetch;
+  try {
+    globalThis.fetch = async (url) => new Response('{"error":"X"}', { status: String(url).endsWith('/data.json') ? 404 : 401, headers: { 'x-request-id': 'judge-ledger-0001' } });
+    let out = await runAttackChecks(config);
+    assert.match(out[0].observed, /HTTP 404, request_id=judge-ledger-0001$/u);
+    assert.match(out[1].observed, /HTTP 401, request_id=judge-ledger-0001$/u);
+    globalThis.fetch = async () => new Response('{"error":"X"}', { status: 401 });
+    out = await runAttackChecks(config);
+    assert.ok(out[0].observed.includes(`request_id=${checkRequestId('static_data_json_gone')}`));
+    globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
+    out = await runAttackChecks(config);
+    assert.ok(out[0].observed.includes('not_run') && !/request_id=|HTTP \d/u.test(out[0].observed));
+    assert.ok(out[1].observed.includes('not_run') && !/request_id=|HTTP \d/u.test(out[1].observed));
+  } finally {
+    globalThis.fetch = real;
+  }
+});

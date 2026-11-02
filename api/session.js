@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import config from '../aleph.config.json' with { type: 'json' };
 import { sessionApi } from '../src/session-api.mjs';
+import { echoRequestId } from '../src/request-log.mjs';
 
 const options = { auth: { persistSession: false, autoRefreshToken: false } };
 
 export default async function handler(request, response) {
+  echoRequestId(request, response);
   const url = config.identityProvider.issuer.replace(/\/auth\/v1$/u, '');
   const publishable = process.env.SUPABASE_PUBLISHABLE_KEY;
   const secret = process.env.SUPABASE_SECRET_KEY;

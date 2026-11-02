@@ -18,6 +18,10 @@
     {
       "source": "/ops",
       "destination": "/ops.html"
+    },
+    {
+      "source": "/data.json",
+      "destination": "/api/gone"
     }
   ]
 }

@@ -12,12 +12,26 @@ export function checkRequestId(name) {
 
 // 보내는 GET마다 요청 ID(x-request-id)를 붙이고, 실제로 받은 HTTP 상태와 같은 ID를 observed에 적는다.
 // 요청 ID를 만들지 못했거나 응답을 받지 못했거나 보내지 않은 점검은 상태와 ID를 지어내지 않고 not_run(미실행)으로 적는다.
+// 응답이 돌려준 요청 ID(서버가 같은 요청을 받았다는 확인). 헤더 이름이 요청·추적·상관 ID 형태일 때만 읽고, 없으면 null이다.
+function echoedId(response) {
+  try {
+    const found = [];
+    response.headers?.forEach?.((value, name) => {
+      if (/^(x-)?(aleph-)?(request|correlation|trace)-id$/iu.test(name) && /^[A-Za-z0-9._:-]{8,100}$/u.test(String(value))) found.push([name.toLowerCase(), String(value)]);
+    });
+    return (found.find(([n]) => n === 'x-request-id') ?? found[0])?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function sendGet(url, headers = {}, name = 'check') {
   try {
     const requestId = checkRequestId(name);
     const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId, 'x-aleph-request-id': requestId },
       redirect: 'error', signal: AbortSignal.timeout(10000) });
-    return { response, status: response.status, requestId, sent: true, tag: `HTTP ${response.status}, request_id=${requestId}` };
+    const id = echoedId(response) ?? requestId;
+    return { response, status: response.status, requestId: id, sent: true, tag: `HTTP ${response.status}, request_id=${id}` };
   } catch (error) {
     return { response: null, status: null, requestId: null, sent: false,
       tag: `not_run: 응답을 받지 못해 상태와 요청 ID를 적지 않음(${error.cause?.code ?? error.message})` };

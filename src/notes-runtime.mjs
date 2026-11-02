@@ -4,6 +4,7 @@ import { createLoginVerifier } from './verify-login.mjs';
 import { notesApi } from './notes.mjs';
 import { restoreApi } from './restore.mjs';
 import { createDeviceCheck, deviceApi } from './device.mjs';
+import { echoRequestId } from './request-log.mjs';
 
 const COLUMNS = 'id, title, content';
 let runtime;
@@ -43,6 +44,7 @@ function build() {
 
 export function handler(name) {
   return async (request, response) => {
+    echoRequestId(request, response);
     try {
       runtime ??= build();
     } catch (error) {

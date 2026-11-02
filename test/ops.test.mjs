@@ -56,12 +56,12 @@ test('로그인 시험 결과를 합치면 옛 미실행 행이 빠지고 수치
 
 test('점검 원문(observed)과 보고서 행의 요청 ID·상태가 다르면 거부한다', () => {
   const row = { ...base, id: 'A01', attackId: 'static_data_json_gone', actual: 'HTTP 404', requestId: UUID };
-  const ok = { ...report([row]), attackEvidence: [{ attackId: 'static_data_json_gone', expected: 'x', observed: `GET /data.json: HTTP 404, request_id=${UUID}` }] };
+  const ok = { ...report([row]), attackEvidence: [{ attackId: 'static_data_json_gone', expected: 'x', observed: `HTTP 404, request_id=${UUID}` }] };
   assert.deepEqual(validateReport(ok), []);
   assert.match(renderOps(ok), /자기 점검\(attack-check\) 원문/u);
-  const otherId = { ...ok, attackEvidence: [{ ...ok.attackEvidence[0], observed: 'GET /data.json: HTTP 404, request_id=44444444-4444-5444-8444-444444444444' }] };
+  const otherId = { ...ok, attackEvidence: [{ ...ok.attackEvidence[0], observed: 'HTTP 404, request_id=44444444-4444-5444-8444-444444444444' }] };
   assert.ok(validateReport(otherId).length > 0);
-  const otherStatus = { ...ok, attackEvidence: [{ ...ok.attackEvidence[0], observed: `GET /data.json: HTTP 200, request_id=${UUID}` }] };
+  const otherStatus = { ...ok, attackEvidence: [{ ...ok.attackEvidence[0], observed: `HTTP 200, request_id=${UUID}` }] };
   assert.ok(validateReport(otherStatus).length > 0);
   const noId = { ...ok, attackEvidence: [{ ...ok.attackEvidence[0], observed: 'not_run: 응답을 받지 못함' }] };
   assert.ok(validateReport(noId).length > 0);
@@ -80,12 +80,12 @@ test('점검은 요청마다 randomUUID()로 만든 ID를 헤더로 보내고 �
     assert.deepEqual(seen.slice(0, 2).map((x) => new URL(x.url).pathname), ['/data.json', '/api/notes']);
     assert.ok(seen.every((x) => UUID4.test(x.id)));
     assert.equal(new Set(seen.map((x) => x.id)).size, seen.length);
-    assert.equal(first[0].observed, `GET /data.json: HTTP 404, request_id=${seen[0].id}`);
-    assert.equal(first[1].observed, `GET /api/notes: HTTP 401, request_id=${seen[1].id}`);
+    assert.equal(first[0].observed, `HTTP 404, request_id=${seen[0].id}`);
+    assert.equal(first[1].observed, `HTTP 401, request_id=${seen[1].id}`);
     assert.notEqual(first[0].observed, second[0].observed);
     globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
     const none = await runAttackChecks(config);
-    for (const item of none.slice(0, 2)) assert.ok(item.observed.includes('not_run') && !/request_id=|HTTP \d/u.test(item.observed));
+    for (const item of none.slice(0, 2)) assert.ok(item.observed.startsWith('not_run') && !/request_id=|HTTP \d/u.test(item.observed));
   } finally {
     globalThis.fetch = real;
   }

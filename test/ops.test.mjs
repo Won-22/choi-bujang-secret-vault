@@ -36,7 +36,7 @@ test('메모 본문 같은 항목과 HTML은 그대로 싣지 않는다', () => 
 
 test('저장소의 ops/report.json은 스스로 모순되지 않고 화면 수치와 같다', { skip: !existsSync(new URL('../ops/report.json', import.meta.url)) }, () => {
   const saved = JSON.parse(readFileSync(new URL('../ops/report.json', import.meta.url), 'utf8'));
-  assert.deepEqual(validateReport(saved), []);
+  assert.deepEqual(validateReport(saved, { requireAllSteps: true }), []);
   const counts = countBy(saved.rows);
   const html = renderOps(saved);
   assert.match(html, new RegExp(`전체 시험<b>${saved.rows.length}</b>`, 'u'));
@@ -54,15 +54,6 @@ test('로그인 시험 결과를 합치면 옛 미실행 행이 빠지고 수치
   assert.equal(merged.summary['실패'], 1);
 });
 
-test('점검 요청 ID는 점검마다 고정되고 서로 다르며 UUID(버전 8) 모양이다', async () => {
-  const { checkRequestId } = await import('../src/attack-check.mjs');
-  const a = checkRequestId('static_data_json_gone');
-  assert.equal(a, checkRequestId('static_data_json_gone'));
-  assert.notEqual(a, checkRequestId('anonymous_list_refused'));
-  assert.ok(!/sha1/iu.test(readFileSync(new URL('../src/attack-check.mjs', import.meta.url), 'utf8').replace(/SHA-1/g, '')), '점검 코드에 SHA-1이 없다');
-  assert.match(a, /^[0-9a-f]{8}-[0-9a-f]{4}-8[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u);
-});
-
 test('점검 원문(observed)과 보고서 행의 요청 ID·상태가 다르면 거부한다', () => {
   const row = { ...base, id: 'A01', attackId: 'static_data_json_gone', actual: 'HTTP 404', requestId: UUID };
   const ok = { ...report([row]), attackEvidence: [{ attackId: 'static_data_json_gone', expected: 'x', observed: `GET /data.json: HTTP 404, request_id=${UUID}` }] };
@@ -76,23 +67,32 @@ test('점검 원문(observed)과 보고서 행의 요청 ID·상태가 다르면
   assert.ok(validateReport(noId).length > 0);
 });
 
-test('점검은 응답이 돌려준 요청 ID가 있으면 그 값을, 없으면 보낸 ID를 기록하고 응답이 없으면 not_run', async () => {
-  const { runAttackChecks, checkRequestId } = await import('../src/attack-check.mjs');
+test('점검은 요청마다 randomUUID()로 만든 ID를 헤더로 보내고 같은 ID와 실제 상태만 기록하며 응답이 없으면 not_run', async () => {
+  const { runAttackChecks } = await import('../src/attack-check.mjs');
   const config = { step: 12, publicAppUrl: 'https://student-defense.vercel.app/', sampleMarker: 'SAMPLE_NOTE_1', judgeIssuer: 'https://x.up.railway.app/defense/judge' };
+  const UUID4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u;
   const real = globalThis.fetch;
+  const seen = [];
   try {
-    globalThis.fetch = async (url) => new Response('{"error":"X"}', { status: String(url).endsWith('/data.json') ? 404 : 401, headers: { 'x-request-id': 'judge-ledger-0001' } });
-    let out = await runAttackChecks(config);
-    assert.match(out[0].observed, /HTTP 404, request_id=judge-ledger-0001$/u);
-    assert.match(out[1].observed, /HTTP 401, request_id=judge-ledger-0001$/u);
-    globalThis.fetch = async () => new Response('{"error":"X"}', { status: 401 });
-    out = await runAttackChecks(config);
-    assert.ok(out[0].observed.includes(`request_id=${checkRequestId('static_data_json_gone')}`));
+    globalThis.fetch = async (url, init) => { seen.push({ url: String(url), id: init.headers['x-request-id'] }); return new Response('{"error":"X"}', { status: String(url).endsWith('/data.json') ? 404 : 401 }); };
+    const first = await runAttackChecks(config);
+    const second = await runAttackChecks(config);
+    assert.deepEqual(seen.slice(0, 2).map((x) => new URL(x.url).pathname), ['/data.json', '/api/notes']);
+    assert.ok(seen.every((x) => UUID4.test(x.id)));
+    assert.equal(new Set(seen.map((x) => x.id)).size, seen.length);
+    assert.equal(first[0].observed, `GET /data.json: HTTP 404, request_id=${seen[0].id}`);
+    assert.equal(first[1].observed, `GET /api/notes: HTTP 401, request_id=${seen[1].id}`);
+    assert.notEqual(first[0].observed, second[0].observed);
     globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
-    out = await runAttackChecks(config);
-    assert.ok(out[0].observed.includes('not_run') && !/request_id=|HTTP \d/u.test(out[0].observed));
-    assert.ok(out[1].observed.includes('not_run') && !/request_id=|HTTP \d/u.test(out[1].observed));
+    const none = await runAttackChecks(config);
+    for (const item of none.slice(0, 2)) assert.ok(item.observed.includes('not_run') && !/request_id=|HTTP \d/u.test(item.observed));
   } finally {
     globalThis.fetch = real;
   }
+});
+
+test('1~12단계 중 시험 기록이 없는 단계가 있으면 기록을 거부한다', () => {
+  assert.deepEqual(validateReport(report([base])), []);
+  assert.ok(validateReport(report([base]), { requireAllSteps: true }).some((p) => p.includes('1단계')));
+  assert.match(renderOps(report([base])), /단계별 기록\(1~12단계\)/u);
 });

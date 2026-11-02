@@ -1,37 +1,13 @@
-import { createHash } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 
-// 점검마다 고정된 요청 ID. 이름에서 SHA-256으로 만든 UUID(버전 8, 이름 기반)다. 격리 환경에서 허용되지 않는 SHA-1은 쓰지 않는다.
-// 번들·보고서(ops/report.json)·심판이 같은 점검을 같은 ID로 볼 수 있고, 점검끼리는 서로 다른 ID다.
-export function checkRequestId(name) {
-  const bytes = createHash('sha256').update(`aleph-defense-check:${name}`).digest().subarray(0, 16);
-  bytes[6] = (bytes[6] & 0x0f) | 0x80;
-  bytes[8] = (bytes[8] & 0x3f) | 0x80;
-  const hex = bytes.toString('hex');
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
-
-// 보내는 GET마다 요청 ID(x-request-id)를 붙이고, 실제로 받은 HTTP 상태와 같은 ID를 observed에 적는다.
-// 요청 ID를 만들지 못했거나 응답을 받지 못했거나 보내지 않은 점검은 상태와 ID를 지어내지 않고 not_run(미실행)으로 적는다.
-// 응답이 돌려준 요청 ID(서버가 같은 요청을 받았다는 확인). 헤더 이름이 요청·추적·상관 ID 형태일 때만 읽고, 없으면 null이다.
-function echoedId(response) {
+// 보내는 GET마다 randomUUID()로 새 요청 ID를 만들어 x-request-id로 보내고, 실제로 받은 HTTP 상태와 같은 ID를 observed에 적는다.
+// 요청을 보내지 않았거나 응답을 받지 못한 점검은 상태와 ID를 지어내지 않고 not_run(미실행)으로 적는다.
+async function sendGet(url, headers = {}) {
+  const requestId = randomUUID();
   try {
-    const found = [];
-    response.headers?.forEach?.((value, name) => {
-      if (/^(x-)?(aleph-)?(request|correlation|trace)-id$/iu.test(name) && /^[A-Za-z0-9._:-]{8,100}$/u.test(String(value))) found.push([name.toLowerCase(), String(value)]);
-    });
-    return (found.find(([n]) => n === 'x-request-id') ?? found[0])?.[1] ?? null;
-  } catch {
-    return null;
-  }
-}
-
-async function sendGet(url, headers = {}, name = 'check') {
-  try {
-    const requestId = checkRequestId(name);
-    const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId, 'x-aleph-request-id': requestId },
+    const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId },
       redirect: 'error', signal: AbortSignal.timeout(10000) });
-    const id = echoedId(response) ?? requestId;
-    return { response, status: response.status, requestId: id, sent: true, tag: `HTTP ${response.status}, request_id=${id}` };
+    return { response, status: response.status, requestId, sent: true, tag: `HTTP ${response.status}, request_id=${requestId}` };
   } catch (error) {
     return { response: null, status: null, requestId: null, sent: false,
       tag: `not_run: 응답을 받지 못해 상태와 요청 ID를 적지 않음(${error.cause?.code ?? error.message})` };
@@ -55,7 +31,7 @@ export async function runAttackChecks(config) {
   if (typeof config.sampleMarker !== 'string' || !config.sampleMarker) throw new Error('가상 메모의 확인 표시를 넣어 주세요.');
   if (config.step === 2) return checkStep2(app, config);
   if (config.step >= 3) return checkStep3(app, config.step, config);
-  const sent = await sendGet(new URL('/data.json', app), {}, 'anonymous_note_read');
+  const sent = await sendGet(new URL('/data.json', app));
   const response = sent.response;
   let visible = false;
   if (response?.ok) {
@@ -73,7 +49,7 @@ export async function runAttackChecks(config) {
 
 // 2단계: 옛 공개 파일은 사라졌는지, 새 서버 API는 아직 누구에게나 열려 있는지 비로그인으로 확인한다.
 async function checkStep2(app, config) {
-  const get = (path, name) => sendGet(new URL(path, app), {}, name);
+  const get = (path) => sendGet(new URL(path, app));
   const count = async (response) => {
     if (!response?.ok) return 0;
     try {
@@ -83,9 +59,9 @@ async function checkStep2(app, config) {
       return 0;
     }
   };
-  const old = await get('/data.json', 'static_data_json_gone');
+  const old = await get('/data.json');
   const oldCount = await count(old.response);
-  const api = await get('/api/notes', 'public_api_still_open');
+  const api = await get('/api/notes');
   const apiCount = await count(api.response);
   return [
     { attackId: 'static_data_json_gone', expected: '/data.json에 메모가 없거나 404',
@@ -97,9 +73,9 @@ async function checkStep2(app, config) {
 
 // 3단계: 로그인 없이 목록을 부르면 401/403 JSON으로 거부되는지 확인한다. 로그인한 A 계정의 흐름은 직접 확인한다.
 async function checkStep3(app, step, config) {
-  const get = (path, name) => sendGet(new URL(path, app), {}, name);
-  const old = await get('/data.json', 'static_data_json_gone');
-  const list = await get('/api/notes', 'anonymous_list_refused');
+  const get = (path) => sendGet(new URL(path, app));
+  const old = await get('/data.json');
+  const list = await get('/api/notes');
   let jsonError = false;
   try {
     jsonError = typeof (await list.response?.json())?.error === 'string';
@@ -127,7 +103,7 @@ async function checkOriginalApi(config) {
     return { attackId: 'original_api_direct', expected: '공개 키로 원본 자료를 직접 불러도 메모가 없음',
       observed: 'not_run(미실행): 요청을 보내지 않음, SUPABASE_PUBLISHABLE_KEY 환경변수가 없음' };
   }
-  const sent = await sendGet(config.originalApiUrl, { apikey: key }, 'original_api_direct');
+  const sent = await sendGet(config.originalApiUrl, { apikey: key });
   let rows = 0;
   try {
     const data = await sent.response?.json();

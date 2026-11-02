@@ -9,6 +9,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/u;
 const ROW_KEYS = ['attackId', 'id', 'step', 'group', 'kind', 'name', 'request', 'expected', 'actual', 'status', 'source', 'requestId', 'serverId', 'checkedAt', 'note'];
 
+// 1~12단계 각각에 시험 행이 하나 이상 있어야 '빠짐없이 기록'한 것이다. 단계별 건수를 돌려준다.
+export const coverageBy = (rows) => Array.from({ length: 12 }, (_, i) => ({ step: i + 1, rows: rows.filter((r) => r.step === i + 1) }))
+  .map(({ step, rows: list }) => ({ step, total: list.length, ...countBy(list) }));
+
 export const countBy = (rows) => Object.fromEntries(STATUSES.map((s) => [s, rows.filter((r) => r.status === s).length]));
 
 // 같은 번호의 옛 행과 지정한 행을 빼고 새 행을 더한 기록을 돌려준다. 요약 수치는 행에서 다시 센다.
@@ -19,7 +23,7 @@ export function mergeRows(report, removeIds, newRows) {
 }
 
 // 기록이 스스로 모순되지 않는지 본다. 실측(통과·실패)은 요청 ID와 확인 시각이 있어야 하고, 미실행은 이유가 있어야 한다.
-export function validateReport(report) {
+export function validateReport(report, { requireAllSteps = false } = {}) {
   const problems = [];
   if (!report || report.version !== 1 || !Array.isArray(report.rows)) return ['보고서 형식이 맞지 않습니다.'];
   const ids = new Set();
@@ -46,6 +50,7 @@ export function validateReport(report) {
     if (id && (!row || row.requestId !== id || row.actual !== `HTTP ${status}`)) problems.push(`점검 ${item.attackId}의 observed와 보고서 행이 맞지 않습니다.`);
     if (!id && row && row.status !== '미실행') problems.push(`점검 ${item.attackId}는 요청 ID가 없는데 보고서에는 실측으로 적혀 있습니다.`);
   }
+  if (requireAllSteps) for (const c of coverageBy(report.rows)) if (c.total === 0) problems.push(`${c.step}단계 시험 기록이 없습니다.`);
   const counts = countBy(report.rows);
   for (const status of STATUSES) if (report.summary?.[status] !== counts[status]) problems.push(`요약의 ${status} 수치가 행과 맞지 않습니다.`);
   if (report.summary?.total !== report.rows.length) problems.push('요약의 전체 수치가 행과 맞지 않습니다.');
@@ -116,8 +121,12 @@ h1{font-size:clamp(28px,6vw,42px);margin:8px 0}h2{margin:0 0 6px;font-size:20px}
 </div>
 <p>기록 시각 ${esc(report.generatedAt)} · 확인한 주소 ${esc(report.baseUrl)} · 검사한 배포 커밋 <code>${esc(report.inspectedCommit)}</code>(<code>/aleph.json</code> 기준) · 단계 ${esc(report.deployedStep)} · 정책 사본 해시 <code>${esc(report.policySnapshotHash)}</code></p>
 ${panels}
+<h2>단계별 기록(1~12단계)</h2>
+<div class="wrap"><table style="min-width:520px"><thead><tr><th>단계</th><th>시험</th><th>통과</th><th>실패</th><th>직접 확인</th><th>미실행</th></tr></thead><tbody>
+${coverageBy(report.rows).map((c) => `<tr><td>${c.step}</td><td>${c.total}</td><td>${c['통과']}</td><td>${c['실패']}</td><td>${c['직접 확인']}</td><td>${c['미실행']}</td></tr>`).join('')}
+</tbody></table></div>
 <h2>자기 점검(attack-check) 원문</h2>
-<p>npm run bundle이 쓰는 점검과 같은 코드의 observed 원문입니다. 점검마다 요청 ID가 고정되어 있어 번들 기록과 이 보고서의 값이 같습니다.</p>
+<p>npm run bundle이 쓰는 점검과 같은 코드의 observed 원문입니다. 보고서에는 이 기록을 만든 실행의 값이 그대로 적혀 있습니다.</p>
 <ul>${(report.attackEvidence ?? []).map((e) => `<li><code>${esc(e.attackId)}</code> — ${esc(e.observed)}</li>`).join('')}</ul>
 <h2>전체 시험표</h2>
 <div class="wrap"><table>

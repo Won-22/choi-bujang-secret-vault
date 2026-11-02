@@ -48,7 +48,7 @@ const manual = (id, step, group, name, request, expected, actual, note, kind = '
 // ── 실제 배포 주소에 로그인 없이 보낸 요청 ──────────────────────────────────────────
 const some = '33333333-3333-4333-8333-333333333333';
 const json = { 'Content-Type': 'application/json' };
-const home = await live({ id: 'L01', step: 3, kind: 'normal', name: '첫 화면이 열린다', path: '/', expectStatus: 200 });
+const home = await live({ id: 'L01', step: 1, kind: 'normal', name: '첫 화면이 열린다', path: '/', expectStatus: 200 });
 const html = home?.text ?? '';
 add({ id: 'L02', step: 11, group: 'app', kind: 'forbidden', name: '화면 코드에 브라우저 저장소·공개 키가 없다', request: 'GET / 의 HTML 검색',
   expected: 'localStorage·sessionStorage·sb_publishable 0건', actual: home ? `${(html.match(/localStorage|sessionStorage|sb_publishable|createClient/gu) ?? []).length}건` : '화면을 받지 못함',
@@ -60,6 +60,8 @@ add({ id: 'L04', step: 1, group: 'api', kind: 'normal', name: '첫 화면 응답
   expected: 'X-Content-Type-Options: nosniff', actual: home?.res.headers.get('x-content-type-options') ?? '헤더 없음',
   status: home?.res.headers.get('x-content-type-options') === 'nosniff' ? '통과' : '실패', source: 'live', requestId: randomUUID(), serverId: home?.res.headers.get('x-vercel-id') ?? null, checkedAt: now(), note: 'L01 응답의 헤더' });
 await live({ id: 'L05', step: 2, kind: 'forbidden', name: '옛 공개 자료 파일은 사라졌다', path: '/data.json', expectStatus: 404 });
+await live({ id: 'L21', step: 2, kind: 'forbidden', name: '옛 공개 자료 주소에 가상 메모 문장이 없다', path: '/data.json', expectStatus: 404,
+  inspect: (_res, text) => ({ ok: !/실습용 가상|SAMPLE_NOTE/u.test(text), expected: '가상 메모 문장 0건', actual: `가상 메모 문장 ${(text.match(/실습용 가상|SAMPLE_NOTE/gu) ?? []).length}건` }) });
 await live({ id: 'L06', step: 3, kind: 'forbidden', name: '로그인 없이 메모 목록 요청', path: '/api/notes', expectStatus: 401, expectError: 'LOGIN_REQUIRED' });
 await live({ id: 'L07', step: 3, kind: 'forbidden', name: '로그인 없이 메모 추가 요청', method: 'POST', path: '/api/notes', headers: json, body: JSON.stringify({ title: 't', body: 'b' }), expectStatus: 401, expectError: 'LOGIN_REQUIRED' });
 await live({ id: 'L08', step: 4, kind: 'forbidden', name: '로그인 없이 메모 한 건 읽기', path: `/api/notes/${some}`, expectStatus: 401, expectError: 'LOGIN_REQUIRED' });
@@ -77,6 +79,8 @@ await live({ id: 'L18', step: 11, group: 'app', kind: 'normal', name: '서비스
   inspect: (_res, text) => ({ ok: !/localStorage|Authorization/u.test(text), expected: '토큰·저장소 코드 없음', actual: `토큰·저장소 문구 ${(text.match(/localStorage|Authorization/gu) ?? []).length}건` }) });
 const identity = await live({ id: 'L19', step: 12, group: 'api', kind: 'normal', name: '배포 식별 파일이 열린다', path: '/aleph.json', expectStatus: 200,
   inspect: (_res, text) => { try { const a = JSON.parse(text); const ok = a.step >= 12 && /^[a-f0-9]{40}$/u.test(a.commit); return { ok, expected: '단계 12 이상·커밋 40자', actual: `단계 ${a.step}, 커밋 ${String(a.commit).slice(0, 7)}` }; } catch { return { ok: false, expected: '단계 12 이상·커밋 40자', actual: 'JSON 아님' }; } } });
+await live({ id: 'L22', step: 1, kind: 'normal', name: '배포 식별 파일이 내 저장소 주소를 알려 준다', path: '/aleph.json', expectStatus: 200,
+  inspect: (_res, text) => { try { const a = JSON.parse(text); const ok = a.repoUrl === config.repoUrl && /^[a-f0-9]{40}$/u.test(a.commit); return { ok, expected: 'aleph.config.json의 저장소 주소와 같음·커밋 40자', actual: `저장소 ${a.repoUrl === config.repoUrl ? '일치' : '불일치'}` }; } catch { return { ok: false, expected: '저장소 주소 일치', actual: 'JSON 아님' }; } } });
 if (KEY) {
   const directUrl = config.originalApiUrl;
   const requestId = randomUUID();
@@ -222,7 +226,7 @@ const report = {
   attackEvidence: evidence,
   summary: { ...countBy(rows), total: rows.length }, rows,
 };
-const problems = validateReport(report);
+const problems = validateReport(report, { requireAllSteps: true });
 if (problems.length) {
   process.stderr.write(`작전실 기록 첫 오류: ${problems[0]}\n`);
   process.exitCode = 1;

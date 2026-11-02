@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
-import { deviceApi } from '../src/device.mjs';
+import { createDeviceCheck, deviceApi } from '../src/device.mjs';
 
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
@@ -58,4 +58,20 @@ test('대기 요청이 너무 많으면 429', async () => {
   const { call } = fake();
   for (let i = 0; i < 5; i += 1) assert.equal((await call('POST')).status, 200);
   assert.equal((await call('POST')).status, 429);
+});
+
+test('메모 API용 확인은 승인된 기기만 true이고 오류는 false, 쿠키는 /api 경로로 내려간다', async () => {
+  const { call, rows } = fake();
+  const made = await call('POST');
+  assert.match(made.headers['set-cookie'], /Path=\/api;/u);
+  const cookie = `vault_device=${cookieOf(made)}`;
+  const check = createDeviceCheck({ getDevice: async (id) => ({ data: rows.get(id) ?? null }) });
+  assert.equal(await check({ headers: { cookie } }, { userId: A }), false);
+  rows.get(cookieOf(made).split('.')[0]).status = 'approved';
+  assert.equal(await check({ headers: { cookie } }, { userId: A }), true);
+  assert.equal(await check({ headers: { cookie } }, { userId: B }), false);
+  assert.equal(await check({ headers: {} }, { userId: A }), false);
+  assert.equal(await createDeviceCheck({ getDevice: async () => { throw new Error('db down'); } })({ headers: { cookie } }, { userId: A }), false);
+  const again = await call('GET', { cookie });
+  assert.match(again.headers['set-cookie'], /Path=\/api;/u);
 });

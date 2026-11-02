@@ -63,16 +63,11 @@
   <script type="module">
     // 로그인과 모든 자료 요청은 이 사이트의 서버 함수(/api/...)만 부른다. 브라우저에는 Supabase 키가 없다.
     const $ = (id) => document.getElementById(id);
-    const KEY = 'vault.session';
     let session = null;
     let editing = null;
 
     const say = (text) => { $('error').textContent = text || ''; };
-    const store = (value) => {
-      try { value ? localStorage.setItem(KEY, JSON.stringify(value)) : localStorage.removeItem(KEY); } catch { /* 저장하지 못해도 이번 탭에서는 동작 */ }
-    };
-    const stored = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; } };
-
+    // 로그인 세션(토큰)은 이 탭의 메모리에만 둔다. 브라우저 저장소에 쓰지 않으므로 새로고침하면 다시 로그인한다.
     async function sessionCall(method, body, token) {
       const response = await fetch('/api/session', { method, cache: 'no-store',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
@@ -83,7 +78,7 @@
     }
     async function fresh() {
       if (session && session.expires_at - 60 < Date.now() / 1000) {
-        try { session = await sessionCall('PUT', { refresh_token: session.refresh_token }); store(session); } catch { setSession(null); }
+        try { session = await sessionCall('PUT', { refresh_token: session.refresh_token }); } catch { setSession(null); }
       }
     }
     async function api(path, options = {}) {
@@ -140,7 +135,6 @@
 
     function setSession(next) {
       session = next;
-      store(next);
       $('login').hidden = !!session;
       $('vault').hidden = !session;
       if (session) {
@@ -187,7 +181,7 @@
         await load();
       });
     };
-    setSession(stored());
+    setSession(null);
   </script>
 </body>
 </html>

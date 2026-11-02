@@ -17,11 +17,11 @@ function fake() {
       return { data: row };
     },
   };
-  const api = notesApi({ db, authenticate: async (r) => (r.headers.authorization ? { userId: r.headers.authorization.slice(7) === 'B' ? B : A } : null) });
-  const call = async (name, method, { query, body, auth = true, as = 'x' } = {}) => {
+  const api = notesApi({ db, deviceApproved: async (r) => r.headers.device !== 'no', authenticate: async (r) => (r.headers.authorization ? { userId: r.headers.authorization.slice(7) === 'B' ? B : A } : null) });
+  const call = async (name, method, { query, body, auth = true, as = 'x', device } = {}) => {
     const out = {};
     const response = { setHeader(k, v) { (out.headers ??= {})[k.toLowerCase()] = v; }, status(code) { out.status = code; return { json(b) { out.body = b; } }; } };
-    await api[name]({ method, query, body, headers: auth ? { authorization: `Bearer ${as}` } : {} }, response);
+    await api[name]({ method, query, body, headers: { ...(auth ? { authorization: `Bearer ${as}` } : {}), ...(device ? { device } : {}) } }, response);
     return out;
   };
   return { call };
@@ -72,4 +72,13 @@ test('본문의 role은 믿지 않고 거부하며, 응답에 자원 ID가 붙�
   const { id } = (await call('collection', 'POST', { body: { title: 't', body: 'b' } })).body;
   assert.equal((await call('item', 'PUT', { query: { id }, body: { title: 't', body: 'b', isInstructor: true } })).status, 403);
   assert.equal((await call('item', 'GET', { query: { id } })).headers['x-resource-id'], 'memo.item');
+});
+
+test('승인되지 않은 기기는 로그인했어도 메모를 읽거나 쓸 수 없다', async () => {
+  const { call } = fake();
+  for (const [name, method] of [['collection', 'GET'], ['collection', 'POST'], ['item', 'GET'], ['item', 'PUT'], ['item', 'DELETE']]) {
+    const r = await call(name, method, { device: 'no', query: { id: '33333333-3333-4333-8333-333333333333' }, body: { title: 't', body: 'b' } });
+    assert.deepEqual([r.status, r.body], [403, { error: 'DEVICE_NOT_APPROVED' }]);
+  }
+  assert.equal((await call('collection', 'GET', { auth: false, device: 'no' })).status, 401);
 });

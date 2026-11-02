@@ -26,8 +26,8 @@ const claimsOtherOwner = (raw, userId) => ['owner_id', 'ownerId', 'userId']
 const claimsRole = (raw) => raw && typeof raw === 'object'
   && ['role', 'roles', 'isInstructor', 'instructor'].some((key) => key in raw);
 
-// authenticate(request) → { userId } | null,  db → 메모 저장소(Supabase 서버 클라이언트를 감싼 것)
-export function notesApi({ authenticate, db }) {
+// authenticate(request) → { userId } | null,  deviceApproved(request, user) → boolean,  db → 메모 저장소(Supabase 서버 클라이언트를 감싼 것)
+export function notesApi({ authenticate, db, deviceApproved }) {
   async function guard(request, response, methods, resource) {
     response.setHeader('X-Resource-Id', resource);
     if (!methods.includes(request.method)) {
@@ -38,6 +38,11 @@ export function notesApi({ authenticate, db }) {
     const user = await authenticate(request);
     if (!user) {
       send(response, 401, { error: 'LOGIN_REQUIRED' });
+      return null;
+    }
+    // 메모를 읽거나 고치기 전에 서버가 이 기기의 승인 상태를 확인한다. 승인 전·확인 실패는 자료 없이 거부한다.
+    if (deviceApproved && !(await deviceApproved(request, user))) {
+      send(response, 403, { error: 'DEVICE_NOT_APPROVED' });
       return null;
     }
     return user;

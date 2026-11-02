@@ -33,7 +33,7 @@ test('응답을 보내기 전에 서버 관측을 기록하고 같은 응답을 
   await observe(REQ, res, async (r) => { r.setHeader('X-A', '1'); r.status(401).json({ error: 'LOGIN_REQUIRED' }); }, async (row) => { rows.push({ ...row, sentBefore: res.sent.length }); });
   const { shape, ...rest } = rows[0];
   assert.deepEqual(rest, { request_id: 'abcdefgh-0001', method: 'GET', route: '/api/notes/:id', status: 401, client: 'aleph-judge', server_request_id: 'abcde-1793-ff00', sentBefore: 0 });
-  assert.deepEqual(JSON.parse(shape), { query: { x: '1' }, headers: ['user-agent', 'x-request-id', 'x-vercel-id'] });
+  assert.deepEqual(JSON.parse(shape), { query: { x: '1' }, headers: ['user-agent', 'x-request-id'] });
   assert.deepEqual(res.sent, [{ code: 401, body: { error: 'LOGIN_REQUIRED' } }]);
   assert.equal(res.headers['X-A'], '1');
 });
@@ -65,6 +65,7 @@ test('/api/observed는 요청 ID와 최근 요청을 가린 형태로만 돌려�
 
 test('심판 점검 도구가 아닌 요청의 모양은 저장하지 않고, 인증·쿠키 이름은 모양에서도 뺀다', () => {
   assert.equal(shapeOf({ url: '/api/notes?a=1', headers: { 'user-agent': 'curl' } }, 'other'), null);
+  assert.deepEqual(JSON.parse(shapeOf({ url: '/x', headers: { 'x-run': 'r', 'x-vercel-id': 'v', 'x-forwarded-for': 'ip' } }, 'no-ua')), { query: {}, headers: ['x-run'] });
   const shape = JSON.parse(shapeOf({ url: '/api/notes?rid=r-1', headers: { authorization: 'Bearer x', cookie: 'c', apikey: 'k', 'x-judge-run': 'run-9' } }, 'aleph-judge'));
   assert.deepEqual(shape, { query: { rid: 'r-1' }, headers: ['x-judge-run'] });
 });

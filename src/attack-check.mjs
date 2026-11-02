@@ -7,12 +7,10 @@ async function sendGet(url, headers = {}) {
   try {
     const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId, 'x-aleph-request-id': requestId },
       redirect: 'error', signal: AbortSignal.timeout(10000) });
-    const server = response.headers.get('x-vercel-id');
-    return { response, status: response.status, requestId, sent: true,
-      tag: `HTTP ${response.status}, status=${response.status}, request_id=${requestId}${server ? `, server_id=${server}` : ''}` };
+    return { response, status: response.status, requestId, sent: true, tag: `HTTP ${response.status}, request_id=${requestId}` };
   } catch (error) {
     return { response: null, status: null, requestId, sent: false,
-      tag: `not_run(미실행): 응답을 받지 못함(${error.cause?.code ?? error.message}), request_id=${requestId}` };
+      tag: `not_run: 응답을 받지 못해 상태를 적지 않음, request_id=${requestId}` };
   }
 }
 
@@ -87,9 +85,9 @@ async function checkStep3(app, step, config) {
   const refused = [401, 403].includes(list.status) && jsonError;
   return [
     { attackId: 'static_data_json_gone', expected: '/data.json에 메모가 없거나 404',
-      observed: `비로그인 GET /data.json (${old.tag})` },
+      observed: `GET /data.json: ${old.tag}` },
     { attackId: 'anonymous_list_refused', expected: '로그인 없는 목록 요청은 401/403과 JSON 오류',
-      observed: `비로그인 GET /api/notes (${list.tag}), JSON 오류 문구 ${jsonError ? '있음' : '없음'}${refused ? '' : ' (거부 실패)'}` },
+      observed: `GET /api/notes: ${list.tag}${refused ? '' : ' (기대 401/403과 다름)'}` },
     { attackId: 'login_note_flow', expected: 'A 로그인 뒤 메모 추가·수정·삭제 가능',
       observed: 'not_run(미실행): 요청을 보내지 않음, 이 스크립트는 로그인 정보를 쓰지 않아 화면에서 직접 확인함' },
     ...(step >= 5 ? [await checkOriginalApi(config)] : []),

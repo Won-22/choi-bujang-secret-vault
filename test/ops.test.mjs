@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
-import { countBy, renderOps, validateReport } from '../src/ops-page.mjs';
+import { countBy, mergeRows, renderOps, validateReport } from '../src/ops-page.mjs';
 
 const UUID = '33333333-3333-4333-8333-333333333333';
 const base = { id: 'X1', step: 6, group: 'rules', kind: 'normal', name: '시험', request: 'GET /', expected: 'allow', actual: 'allow', status: '통과', source: 'local', requestId: UUID, serverId: null, checkedAt: '2026-11-02T00:00:00.000Z', note: '' };
@@ -43,4 +43,13 @@ test('저장소의 ops/report.json은 스스로 모순되지 않고 화면 수�
   assert.match(html, new RegExp(`실측 통과<b>${counts['통과']}</b>`, 'u'));
   assert.match(html, new RegExp(`미실행<b>${counts['미실행']}</b>`, 'u'));
   assert.ok(!JSON.stringify(saved).match(/"(title|content|body)"/u));
+});
+
+test('로그인 시험 결과를 합치면 옛 미실행 행이 빠지고 수치가 행에서 다시 세어진다', () => {
+  const old = report([base, { ...skipped, id: 'N01' }, { ...skipped, id: 'V01' }]);
+  const merged = mergeRows(old, ['N01'], [{ ...base, id: 'V01' }, { ...base, id: 'V02', status: '실패', actual: 'x' }]);
+  assert.deepEqual(merged.rows.map((r) => r.id), ['X1', 'V01', 'V02']);
+  assert.deepEqual(validateReport(merged), []);
+  assert.equal(merged.summary['미실행'], 0);
+  assert.equal(merged.summary['실패'], 1);
 });

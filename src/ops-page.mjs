@@ -11,6 +11,13 @@ const ROW_KEYS = ['id', 'step', 'group', 'kind', 'name', 'request', 'expected', 
 
 export const countBy = (rows) => Object.fromEntries(STATUSES.map((s) => [s, rows.filter((r) => r.status === s).length]));
 
+// 같은 번호의 옛 행과 지정한 행을 빼고 새 행을 더한 기록을 돌려준다. 요약 수치는 행에서 다시 센다.
+export function mergeRows(report, removeIds, newRows) {
+  const drop = new Set([...removeIds, ...newRows.map((r) => r.id)]);
+  const rows = [...report.rows.filter((r) => !drop.has(r.id)), ...newRows];
+  return { ...report, rows, summary: { ...countBy(rows), total: rows.length } };
+}
+
 // 기록이 스스로 모순되지 않는지 본다. 실측(통과·실패)은 요청 ID와 확인 시각이 있어야 하고, 미실행은 이유가 있어야 한다.
 export function validateReport(report) {
   const problems = [];

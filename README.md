@@ -169,7 +169,7 @@ DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, 
 
 **이번 기록(2026-11-02T06:20:33.082Z):** 전체 54건 = 실측 통과 44, 실측 실패 0, 직접 확인 3, 미실행 7. 실측 통과는 이 도구가 보낸 요청·실행한 시험의 결과일 뿐 심판 통과나 방어 성공의 증거가 아닙니다. **심판의 41종 공격 방어 시험은 심판이 따로 실행하며 여기서는 미실행(N06)입니다.** 미실행 항목: 실제 접속 회수 집행(R02), B가 A의 메모 id로 직접 요청(N01), 본문 role 요청(N02), 실제 재로그인 뒤 재판정(N03), 승인 전·후 기기 확인(N04), 브라우저 설치·오프라인 화면(N05), 41종(N06). 시험표의 번호로 각 이유를 볼 수 있습니다.
 
-**검사한 커밋:** `a5ea3c3`(`a5ea3c3f3b7dcd816c0fc9ab0cf80cc49e098726`, 기록을 만들 때 `/aleph.json`이 알려 준 배포 커밋, 단계 12). 이 커밋 뒤의 커밋은 `ops/report.json`과 README만 바꿉니다. 확인: `git diff --stat a5ea3c3 HEAD`.
+**검사한 커밋:** `a5ea3c3`(`a5ea3c3f3b7dcd816c0fc9ab0cf80cc49e098726`, 기록을 만들 때 `/aleph.json`이 알려 준 배포 커밋, 단계 12). 이 커밋 뒤에는 `ops/report.json`, README, 시험 도구(`scripts/ops-live.mjs`, `src/ops-page.mjs`의 병합 함수, `package.json`·`.gitignore`·시험)만 바뀌고 제품 코드(`api/`, 판정기, 탐지, 메모 API)는 같습니다. 확인: `git diff --stat a5ea3c3 HEAD -- api src/decider.mjs src/detect.mjs src/notes.mjs src/resources.mjs src/device.mjs`가 비어 있어야 합니다.
 
 ### 학생 몫과 제공 엔진의 출처
 - **제공 엔진: ALEPH SDP 엔진**(반 엔진·심판 접수 서버). 이 저장소에는 엔진 코드와 비밀값이 없습니다. 공개 주소 `judgeIssuer`(`aleph.config.json`)와 엔진이 정한 요청·응답 계약(`docs/DECIDER_REQUEST.md`, `docs/DETECT_EVENTS.md`)만 따릅니다. 실제 기기 등록 확인, 새 로그인 시각 검증, 접속 회수 집행, 41종 심판은 엔진·심판의 몫이며 이 저장소에서 실행하지 않았습니다.
@@ -200,3 +200,5 @@ DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, 
 **재현 순서(저장소를 새로 받았을 때):** 1) `npm ci` 2) `npm test` 3) `npm run decider:test` 4) `npm run detect:test` 5) `npm run policy -- verify` 6) 배포 뒤 `npm run ops:report`(공개 키 환경변수 선택) 7) 배포 주소의 `/ops`와 `ops/report.json`의 수치가 같은지 확인.
 
 **남은 한계:** 시험표의 로그인 필요 항목은 이 도구가 로그인 정보를 쓰지 않아 실행하지 않았습니다. 복원 API는 기기 승인을 확인하지 않습니다. `api/ai.js`·`api/threat-intel.js`와 `package/` 안내서는 시작 틀 그대로 미구현·미작성입니다(이번 12단계 요청 범위 밖).
+
+**로그인이 필요한 시험 실행(`npm run ops:live`):** 사용자가 자기 터미널에 계정 환경변수(`OPS_A_EMAIL`, `OPS_A_PASSWORD`, `OPS_B_EMAIL`, `OPS_B_PASSWORD`)를 설정해 실행합니다. 비밀번호·토큰은 출력·기록에 쓰지 않고, 기기 쿠키는 Git에서 제외되는 `ops/.device-cookies.json`에만 둡니다. 승인되지 않은 기기의 거부(V01·V02)를 먼저 실측하고, 두 계정의 기기가 승인된 뒤에만 B의 A 메모 접근 거부, 본문 role 거부, A의 자기 메모 추가·수정·삭제를 실측해 미실행 항목 N01·N02·N04를 대체합니다. 시험이 만든 메모는 끝에 삭제합니다.

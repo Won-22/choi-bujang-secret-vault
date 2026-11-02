@@ -7,3 +7,4 @@ public/aleph.json
 backup/test-policy.json
 backup/audit.log
 public/ops.html
+ops/.device-cookies.json

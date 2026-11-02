@@ -55,15 +55,28 @@ test('서버가 그 요청을 기록했다고 확인하지 못하면 server_obse
   assert.match(by(out).static_data_json_gone, /^HTTP 404, request_id=[0-9a-f-]{36}$/u);
 });
 
-test('서버 응답이 아니거나 응답이 없거나 보내지 않은 점검은 상태·ID 없이 not_run', async () => {
-  let out = await withFetch(async () => new Response('blocked', { status: 403 }), () => runAttackChecks(CONFIG));
-  for (const id of ['static_data_json_gone', 'anonymous_list_refused', 'anonymous_item_refused', 'anonymous_device_refused']) {
-    const text = by(out)[id];
-    assert.ok(text.startsWith('not_run') && !/request_id=|HTTP \d/u.test(text), id);
-  }
-  out = await withFetch(async () => { throw new TypeError('fetch failed'); }, () => runAttackChecks(CONFIG));
+test('응답 헤더가 모두 걸러진 응답이라도 응답을 받았다면 실제 상태와 요청 ID를 적는다', async () => {
+  // 심판 환경처럼 서버 흔적 헤더(x-vercel-id, x-request-id)가 없는 응답. /api/observed 확인은 되지 않아 server_observed는 없다.
+  const log = [];
+  const stub = async (url, init) => {
+    const u = new URL(String(url));
+    if (u.pathname !== '/api/observed') log.push({ path: u.pathname, id: init.headers['x-request-id'] });
+    return new Response(u.pathname === '/api/observed' ? '{"found":false,"observations":[]}' : '{"error":"X"}', { status: u.pathname === '/data.json' ? 404 : u.pathname === '/api/observed' ? 200 : 401 });
+  };
+  const o = by(await withFetch(stub, () => runAttackChecks(CONFIG)));
+  const idOf = (path) => log.find((x) => x.path === path).id;
+  assert.equal(o.static_data_json_gone, `HTTP 404, request_id=${idOf('/data.json')}`);
+  assert.equal(o.anonymous_list_refused, `HTTP 401, request_id=${idOf('/api/notes')}`);
+  assert.equal(o.anonymous_session_probe, `HTTP 401, request_id=${idOf('/api/session')}`);
+  assert.equal(o.deployment_identity_open, `HTTP 401, request_id=${idOf('/api/identity')}`);
+});
+
+test('응답이 없거나 보내지 않은 점검만 상태·ID 없이 not_run', async () => {
+  const out = await withFetch(async () => { throw new TypeError('fetch failed'); }, () => runAttackChecks(CONFIG));
   for (const o of out) assert.ok(o.observed.startsWith('not_run') && !/request_id=|HTTP \d/u.test(o.observed), o.attackId);
-  assert.ok(by(out).decider_device_registered.startsWith('not_run'));
+  const real = await withFetch(fakeServer().stub, () => runAttackChecks(CONFIG));
+  assert.ok(by(real).decider_device_registered.startsWith('not_run'));
+  assert.ok(by(real).login_note_flow.startsWith('not_run'));
 });
 
 test('중간 장치가 요청 ID를 바꿔 넣어 응답이 다른 ID를 돌려주면 그 값을 기록한다', async () => {

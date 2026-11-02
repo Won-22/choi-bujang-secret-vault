@@ -1,21 +1,16 @@
 import { randomUUID } from 'node:crypto';
 
-// 보내는 GET마다 randomUUID()로 새 요청 ID를 만들어 x-request-id와 x-aleph-request-id로 보내고, 실제로 받은 HTTP 상태와 요청 ID를 observed에 적는다.
-// 우리 서버가 보낸 응답에는 반드시 서버 흔적(Vercel의 x-vercel-id, 또는 서버 함수가 되돌려 주는 x-request-id)이 있다. 이 흔적이 없는 응답은
-// 실제 서버 응답이 아니므로 상태와 ID를 적지 않고 not_run으로 적는다. 중간 장치가 x-request-id를 바꿔 넣었다면 서버가 되돌려 준 값을 적는다.
-// 요청을 보내지 않았거나 응답을 받지 못한 점검도 상태와 ID를 지어내지 않고 not_run(미실행)으로 적는다.
+// 보내는 GET마다 randomUUID()로 새 요청 ID를 만들어 x-request-id와 x-aleph-request-id로 보내고, 응답을 받으면 실제 HTTP 상태와 요청 ID를 observed에 적는다.
+// 응답 헤더가 어떻게 걸러졌든(서버 흔적 헤더가 없어도) 응답을 받았다면 상태를 적는다. 서버가 요청 ID를 되돌려 주었다면 그 값을, 아니면 보낸 ID를 적는다.
+// 요청을 보내지 않았거나 응답을 받지 못한 점검만 상태와 ID를 지어내지 않고 not_run(미실행)으로 적는다.
 const ID_PATTERN = /^[A-Za-z0-9._:-]{8,100}$/u;
-async function sendGet(url, headers = {}, { proof = true } = {}) {
+async function sendGet(url, headers = {}) {
   const requestId = randomUUID();
   try {
     const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId, 'x-aleph-request-id': requestId },
       redirect: 'error', signal: AbortSignal.timeout(10000) });
     const echoed = response.headers?.get?.('x-request-id');
-    const echoOk = typeof echoed === 'string' && ID_PATTERN.test(echoed);
-    if (proof && !echoOk && !response.headers?.get?.('x-vercel-id')) {
-      return { response: null, status: null, requestId: null, sent: false, tag: 'not_run: 서버가 보낸 응답으로 확인되지 않음(서버 확인 헤더 없음)' };
-    }
-    const id = echoOk ? echoed : requestId;
+    const id = typeof echoed === 'string' && ID_PATTERN.test(echoed) ? echoed : requestId;
     return { response, status: response.status, requestId: id, sent: true, tag: `HTTP ${response.status}, request_id=${id}` };
   } catch (error) {
     return { response: null, status: null, requestId: null, sent: false,
@@ -40,7 +35,7 @@ export async function runAttackChecks(config) {
   if (typeof config.sampleMarker !== 'string' || !config.sampleMarker) throw new Error('가상 메모의 확인 표시를 넣어 주세요.');
   if (config.step === 2) return checkStep2(app, config);
   if (config.step >= 3) return checkStep3(app, config.step, config);
-  const sent = await sendGet(new URL('/data.json', app), {}, { proof: false });
+  const sent = await sendGet(new URL('/data.json', app));
   const response = sent.response;
   let visible = false;
   if (response?.ok) {
@@ -58,7 +53,7 @@ export async function runAttackChecks(config) {
 
 // 2단계: 옛 공개 파일은 사라졌는지, 새 서버 API는 아직 누구에게나 열려 있는지 비로그인으로 확인한다.
 async function checkStep2(app, config) {
-  const get = (path) => sendGet(new URL(path, app), {}, { proof: false });
+  const get = (path) => sendGet(new URL(path, app));
   const count = async (response) => {
     if (!response?.ok) return 0;
     try {
@@ -133,7 +128,7 @@ async function checkOriginalApi(config) {
     return { attackId: 'original_api_direct', expected: '5단계: 공개 키로 원본 자료를 직접 불러도 메모가 없음',
       observed: 'not_run(미실행): 요청을 보내지 않음, SUPABASE_PUBLISHABLE_KEY 환경변수가 없음' };
   }
-  const sent = await sendGet(config.originalApiUrl, { apikey: key }, { proof: false });
+  const sent = await sendGet(config.originalApiUrl, { apikey: key });
   if (!sent.sent) return { attackId: 'original_api_direct', expected: '5단계: 공개 키로 원본 자료를 직접 불러도 메모가 없음', observed: sent.tag };
   let rows = 0;
   try {

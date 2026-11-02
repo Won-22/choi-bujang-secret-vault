@@ -80,3 +80,13 @@ DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, 
 3. `node --test test/` — 등록·미등록·값 없음·`'true'`·`1` 요청을 다룹니다.
 
 로컬 시험은 가상 요청 연습이며 심판 판정이나 실제 접속 증거가 아닙니다. 미등록 기기 공격은 심판이 확인하며, 따로 설치할 접속 프로그램은 없습니다.
+
+## 7단계: 평소와 다른 접속은 다시 확인
+
+**입력 검사(출처):** `src/decider.mjs`는 `signals.source`가 엔진이 검증한 가상 출처(`judge_fixture`)이고 지역·네트워크·시각(0~23 정수)·최근 사건 배열이 모두 형식에 맞을 때만 접속 정보를 근거로 씁니다. 실제 경로의 `source: "none"`, 브라우저 헤더 같은 알 수 없는 출처, 값이 없거나 형식이 틀린 경우는 근거가 아니며 정상값으로 채우지도 않습니다(그대로 무시).
+
+**규칙 `step_up_required`:** 새벽 0~5시 접속 **그리고** 네트워크가 `unusual` **그리고** 최근 10분 안 `risk_signal` 사건 합계가 10 이상일 때만 `step_up`(`step_up_required`)을 돌려줍니다. 지역은 근거로 쓰지 않아 지역 하나만으로 차단하지 않습니다. 엔진이 새 로그인 시각을 검증해 `stepUp.verified: true`, `authAgeSeconds` 0~900초로 넘기면 `allow`합니다. 기기 규칙(`device_registered`)은 그대로 먼저 적용됩니다.
+
+**재로그인 계약 확인:** 요청에 엔진이 채우는 `stepUp{verified, authAgeSeconds}`가 있어 계약은 존재합니다. 다만 확인 전 자료를 실제로 막고 새 로그인 뒤 다시 판정하는 일은 제공 엔진이 하며, 이 저장소의 앱은 판정기를 호출하지 않습니다. 그 실제 차단은 **미실행**입니다. 토큰 원문은 기록하지 않습니다.
+
+**시험:** `npm run decider:test`(정상 allow, 미등록 deny, 복합 이상 step_up, 다시 확인 allow), `npm run fixture:7`, `node --test test/`. 로컬 시험은 심판 통과 증거가 아닙니다.

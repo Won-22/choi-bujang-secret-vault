@@ -74,7 +74,7 @@ test('점검은 요청마다 randomUUID()로 만든 ID를 헤더로 보내고 �
   const real = globalThis.fetch;
   const seen = [];
   try {
-    globalThis.fetch = async (url, init) => { seen.push({ url: String(url), id: init.headers['x-request-id'], alt: init.headers['x-aleph-request-id'] }); return new Response('{"error":"X"}', { status: String(url).endsWith('/data.json') ? 404 : 401 }); };
+    globalThis.fetch = async (url, init) => { seen.push({ url: String(url), id: init.headers['x-request-id'], alt: init.headers['x-aleph-request-id'] }); return new Response('{"error":"X"}', { status: String(url).endsWith('/data.json') ? 404 : 401, headers: { 'x-vercel-id': 'icn1::test-0001' } }); };
     const first = await runAttackChecks(config);
     const second = await runAttackChecks(config);
     assert.deepEqual(seen.slice(0, 2).map((x) => new URL(x.url).pathname), ['/data.json', '/api/notes']);
@@ -83,6 +83,10 @@ test('점검은 요청마다 randomUUID()로 만든 ID를 헤더로 보내고 �
     assert.equal(first[0].observed, `HTTP 404, request_id=${seen[0].id}`);
     assert.equal(first[1].observed, `HTTP 401, request_id=${seen[1].id}`);
     assert.notEqual(first[0].observed, second[0].observed);
+    // 서버 흔적(x-vercel-id·x-request-id)이 없는 응답은 실제 서버 응답으로 보지 않고 상태·ID를 적지 않는다
+    globalThis.fetch = async () => new Response('blocked', { status: 403 });
+    const canned = await runAttackChecks(config);
+    for (const item of canned.slice(0, 2)) assert.ok(item.observed.startsWith('not_run') && !/request_id=|HTTP \d/u.test(item.observed));
     globalThis.fetch = async () => { throw new TypeError('fetch failed'); };
     const none = await runAttackChecks(config);
     for (const item of none.slice(0, 2)) assert.ok(item.observed.startsWith('not_run') && !/request_id=|HTTP \d/u.test(item.observed));

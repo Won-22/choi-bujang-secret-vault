@@ -9,6 +9,8 @@ export function echoRequestId(request, response, log = console.log) {
   // 진단용: 헤더 이름 목록과, 요청·추적 ID처럼 보이는 헤더의 값만 적는다.
   const names = Object.keys(headers).filter((n) => !/^(authorization|cookie|apikey)$/iu.test(n)).sort();
   const ids = Object.fromEntries(names.filter((n) => /(request|trace|correlation|run|aleph).*id$|^x-aleph/iu.test(n) && typeof headers[n] === 'string' && headers[n].length <= 100).map((n) => [n, headers[n]]));
-  log(JSON.stringify({ event: 'request', requestId: raw, method: request.method, path: String(request.url ?? '').split('?')[0], headerNames: names, idHeaders: ids }));
+  // 로그 표에서 펼치지 않아도 보이도록 중요한 값을 앞에 둔다(요청 ID 헤더, 호스트, 접속 도구 이름, 그다음 헤더 이름 목록).
+  const text = (v) => (typeof v === 'string' ? v.slice(0, 80) : null);
+  log(JSON.stringify({ event: 'request', method: request.method, path: String(request.url ?? '').split('?')[0], requestId: raw, idHeaders: ids, host: text(headers.host), ua: text(headers['user-agent']), headerNames: names }));
   return raw;
 }

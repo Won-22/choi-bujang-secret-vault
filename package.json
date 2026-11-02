@@ -8,6 +8,8 @@
     "test:package": "node --test test/package-starter.test.mjs",
     "bundle": "node scripts/bundle.mjs",
     "policy": "node scripts/policy-backup.mjs",
+    "ops:report": "node scripts/ops-report.mjs",
+    "test": "node --test test/",
     "decider:test": "node scripts/decider-test.mjs",
     "detect:test": "node scripts/detect-test.mjs",
     "fixture:7": "node scripts/fixture-7.mjs",

@@ -1,13 +1,18 @@
 import { randomUUID } from 'node:crypto';
 
-// 보내는 GET마다 새 요청 ID(x-request-id)를 붙이고, 실제로 받은 HTTP 상태와 같은 ID를 observed에 적는다. 보내지 않은 점검만 '미실행'이다.
+// 보내는 GET마다 새 요청 ID를 붙이고(x-request-id), 실제로 받은 HTTP 상태와 같은 ID를 observed에 적는다.
+// 응답을 받지 못했거나 보내지 않은 점검은 상태를 지어내지 않고 not_run(미실행)으로 적는다.
 async function sendGet(url, headers = {}) {
   const requestId = randomUUID();
   try {
-    const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId }, redirect: 'error', signal: AbortSignal.timeout(10000) });
-    return { response, status: response.status, requestId, tag: `HTTP ${response.status}, 요청 ID ${requestId}` };
+    const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId, 'x-aleph-request-id': requestId },
+      redirect: 'error', signal: AbortSignal.timeout(10000) });
+    const server = response.headers.get('x-vercel-id');
+    return { response, status: response.status, requestId, sent: true,
+      tag: `HTTP ${response.status}, status=${response.status}, request_id=${requestId}${server ? `, server_id=${server}` : ''}` };
   } catch (error) {
-    return { response: null, status: null, requestId, tag: `응답 없음(${error.cause?.code ?? error.message}), 요청 ID ${requestId}` };
+    return { response: null, status: null, requestId, sent: false,
+      tag: `not_run(미실행): 응답을 받지 못함(${error.cause?.code ?? error.message}), request_id=${requestId}` };
   }
 }
 
@@ -86,10 +91,10 @@ async function checkStep3(app, step, config) {
     { attackId: 'anonymous_list_refused', expected: '로그인 없는 목록 요청은 401/403과 JSON 오류',
       observed: `비로그인 GET /api/notes (${list.tag}), JSON 오류 문구 ${jsonError ? '있음' : '없음'}${refused ? '' : ' (거부 실패)'}` },
     { attackId: 'login_note_flow', expected: 'A 로그인 뒤 메모 추가·수정·삭제 가능',
-      observed: '미실행: 이 스크립트는 로그인 정보를 쓰지 않아 화면에서 직접 확인함' },
+      observed: 'not_run(미실행): 요청을 보내지 않음, 이 스크립트는 로그인 정보를 쓰지 않아 화면에서 직접 확인함' },
     ...(step >= 5 ? [await checkOriginalApi(config)] : []),
     ...(step >= 4 ? [{ attackId: 'cross_owner_access', expected: 'B가 A의 메모를 읽기·수정·삭제하거나 소유자를 바꾸면 거부',
-      observed: '미실행: 이 스크립트는 로그인 정보를 쓰지 않아 A/B 두 창에서 직접 확인함' }] : []),
+      observed: 'not_run(미실행): 요청을 보내지 않음, 이 스크립트는 로그인 정보를 쓰지 않아 A/B 두 창에서 직접 확인함' }] : []),
   ];
 }
 
@@ -98,7 +103,7 @@ async function checkOriginalApi(config) {
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!key) {
     return { attackId: 'original_api_direct', expected: '공개 키로 원본 자료를 직접 불러도 메모가 없음',
-      observed: '미실행: SUPABASE_PUBLISHABLE_KEY 환경변수가 없어 보내지 않음' };
+      observed: 'not_run(미실행): 요청을 보내지 않음, SUPABASE_PUBLISHABLE_KEY 환경변수가 없음' };
   }
   const sent = await sendGet(config.originalApiUrl, { apikey: key });
   let rows = 0;

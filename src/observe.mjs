@@ -10,6 +10,18 @@ export const clientOf = (ua) => (typeof ua !== 'string' || !ua ? 'no-ua' : /^ALE
 // Vercel의 x-vercel-id(예: sin1::iad1::abcde-1793-ff00)에서 마지막 조각이 대시보드 Logs의 Request ID다.
 export const serverIdOf = (value) => (typeof value === 'string' && /^[A-Za-z0-9:_-]{8,120}$/u.test(value) ? value.split('::').pop() : null);
 
+// 심판 점검 도구(aleph-judge)의 요청에 한해, 그 요청이 어떤 모양인지(쿼리 이름·값, 헤더 이름)를 남긴다. 인증·쿠키·키 헤더는 이름도 제외한다.
+// 다른 접속 도구의 요청은 모양을 저장하지 않는다.
+export function shapeOf(request, client) {
+  if (client !== 'aleph-judge') return null;
+  const query = {};
+  try {
+    for (const [k, v] of new URL(String(request.url ?? ''), 'http://x').searchParams) query[k.slice(0, 40)] = v.slice(0, 80);
+  } catch { /* 쿼리를 읽지 못하면 비워 둔다 */ }
+  const headers = Object.keys(request.headers ?? {}).filter((n) => !/^(authorization|cookie|apikey)$/iu.test(n)).sort();
+  return JSON.stringify({ query, headers }).slice(0, 600);
+}
+
 // 응답을 곧바로 보내지 않고 상태·본문을 모아 두는 가짜 응답. 서버 관측을 기록한 뒤 실제 응답으로 보낸다.
 function buffered(real) {
   const state = { code: 200, body: undefined, done: false };
@@ -38,6 +50,7 @@ export async function observe(request, response, run, record) {
         client: clientOf(request.headers?.['user-agent']),
         server_request_id: serverIdOf(request.headers?.['x-vercel-id']),
       };
+      row.shape = shapeOf(request, row.client);
       try { await record(row); } catch { /* 관측을 못 남겨도 응답은 막지 않는다 */ }
       response.status(state.code).json(state.body);
     }
@@ -48,7 +61,7 @@ export async function observe(request, response, run, record) {
 // GET /api/observed?recent=1[&client=aleph-judge] — 최근 요청을 가린 형태로 돌려준다.
 // 돌려주는 값은 방법·경로 모양·상태·시각·접속 도구 구분·서버 요청 번호뿐이다.
 export function observedApi({ find, recent }) {
-  const mask = (r) => ({ at: r.at, method: r.method, route: r.route, status: r.status, client: r.client ?? 'other', serverRequestId: r.server_request_id ?? null });
+  const mask = (r) => ({ at: r.at, method: r.method, route: r.route, status: r.status, client: r.client ?? 'other', serverRequestId: r.server_request_id ?? null, ...(r.client === 'aleph-judge' ? { shape: r.shape ?? null } : {}) });
   return async (request, response) => {
     response.setHeader('Cache-Control', 'no-store');
     if (request.method !== 'GET') return response.status(405).json({ error: 'METHOD_NOT_ALLOWED' });

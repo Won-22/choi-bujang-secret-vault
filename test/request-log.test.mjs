@@ -26,7 +26,7 @@ test('진단 기록에는 인증·쿠키 값이 들어가지 않는다', () => {
   assert.ok(!lines[0].includes('secret') && !lines[0].includes('vault_device') && !lines[0].includes('"k"'));
   assert.ok(lines[0].includes('x-aleph-run-id'));
   const keys = Object.keys(JSON.parse(lines[0]));
-  assert.deepEqual(keys.slice(0, 7), ['event', 'method', 'path', 'requestId', 'idHeaders', 'host', 'ua']);
+  assert.deepEqual(keys.slice(0, 8), ['event', 'method', 'path', 'query', 'requestId', 'idHeaders', 'host', 'ua']);
 });
 
 test('요청 ID가 없거나 형식이 다르면 헤더를 돌려주지 않지만 요청은 기록한다', () => {

@@ -8,8 +8,10 @@ create table if not exists public.request_log (
   route text not null,           -- UUID는 :id로 바꾼 경로 모양
   status integer not null,
   client text not null default 'other',  -- aleph-judge | no-ua | other (접속 도구 이름은 저장하지 않고 구분만)
-  server_request_id text         -- Vercel이 붙인 서버 요청 번호(대시보드 Logs의 Request ID와 같은 값)
+  server_request_id text,        -- Vercel이 붙인 서버 요청 번호(대시보드 Logs의 Request ID와 같은 값)
+  shape text                     -- 심판 점검 도구의 요청에 한해 쿼리 이름·값과 헤더 이름(인증·쿠키·키 제외)
 );
+alter table public.request_log add column if not exists shape text;
 create index if not exists request_log_request_id_idx on public.request_log (request_id);
 create index if not exists request_log_at_idx on public.request_log (at desc);
 

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { clientOf, observe, observedApi, routeOf, serverIdOf } from '../src/observe.mjs';
+import { clientOf, observe, observedApi, routeOf, serverIdOf, shapeOf } from '../src/observe.mjs';
 
 const makeResponse = () => {
   const out = { headers: {}, sent: [] };
@@ -31,7 +31,9 @@ test('응답을 보내기 전에 서버 관측을 기록하고 같은 응답을 
   const res = makeResponse();
   const rows = [];
   await observe(REQ, res, async (r) => { r.setHeader('X-A', '1'); r.status(401).json({ error: 'LOGIN_REQUIRED' }); }, async (row) => { rows.push({ ...row, sentBefore: res.sent.length }); });
-  assert.deepEqual(rows, [{ request_id: 'abcdefgh-0001', method: 'GET', route: '/api/notes/:id', status: 401, client: 'aleph-judge', server_request_id: 'abcde-1793-ff00', sentBefore: 0 }]);
+  const { shape, ...rest } = rows[0];
+  assert.deepEqual(rest, { request_id: 'abcdefgh-0001', method: 'GET', route: '/api/notes/:id', status: 401, client: 'aleph-judge', server_request_id: 'abcde-1793-ff00', sentBefore: 0 });
+  assert.deepEqual(JSON.parse(shape), { query: { x: '1' }, headers: ['user-agent', 'x-request-id', 'x-vercel-id'] });
   assert.deepEqual(res.sent, [{ code: 401, body: { error: 'LOGIN_REQUIRED' } }]);
   assert.equal(res.headers['X-A'], '1');
 });
@@ -57,6 +59,12 @@ test('/api/observed는 요청 ID와 최근 요청을 가린 형태로만 돌려�
   assert.equal((await ask({})).code, 400);
   assert.equal((await ask({ request_id: 'abcdefgh-0001' }, 'POST')).code, 405);
   const recent = await ask({ recent: '1', client: 'aleph-judge' });
-  assert.deepEqual(recent.body.recent, [{ at: 't', method: 'GET', route: '/api/device', status: 401, client: 'aleph-judge', serverRequestId: 'srv-1' }]);
+  assert.deepEqual(recent.body.recent, [{ at: 't', method: 'GET', route: '/api/device', status: 401, client: 'aleph-judge', serverRequestId: 'srv-1', shape: null }]);
   assert.ok(!JSON.stringify(recent.body).includes('secret-agent') && !JSON.stringify(recent.body).includes('1.2.3.4'));
+});
+
+test('심판 점검 도구가 아닌 요청의 모양은 저장하지 않고, 인증·쿠키 이름은 모양에서도 뺀다', () => {
+  assert.equal(shapeOf({ url: '/api/notes?a=1', headers: { 'user-agent': 'curl' } }, 'other'), null);
+  const shape = JSON.parse(shapeOf({ url: '/api/notes?rid=r-1', headers: { authorization: 'Bearer x', cookie: 'c', apikey: 'k', 'x-judge-run': 'run-9' } }, 'aleph-judge'));
+  assert.deepEqual(shape, { query: { rid: 'r-1' }, headers: ['x-judge-run'] });
 });

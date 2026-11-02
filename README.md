@@ -142,3 +142,5 @@ DB 쪽 최소 권한은 `supabase/notes-rls.sql`입니다(`anon` 권한 없음, 
 7. B가 A의 메모 id로 요청하면 404 — 직접 확인 필요(미실행)
 
 실행하지 않은 시험은 미실행으로 남기며 결과를 꾸미지 않았습니다.
+
+**복원 시험 결과(직접 실행):** 시험 계정 B로 로그인한 화면의 Console에서 `POST /api/backup/restore`를 보낸 응답이 `restored: true`, `idMatches: true`, `ownerMatches: true`, `hashMatches: true`였습니다(대상 ID는 위 한 건). 다른 메모와 A 계정은 건드리지 않았습니다. 화면 새로고침 뒤 메모 복귀와 A 화면 확인, 6·7번 재확인은 별도로 기록하지 않았으므로 미실행으로 남깁니다.

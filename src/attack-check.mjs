@@ -75,26 +75,10 @@ async function checkStep2(app, config) {
   ];
 }
 
-// 서버 관측 확인: 우리 서버가 같은 요청 ID를 받아 같은 상태로 기록했는지 /api/observed로 묻는다(기록이 남을 때까지 잠깐씩 기다려 최대 3번).
-// 서버가 확인해 주면 그 상태를, 확인하지 못하면 null을 돌려준다(확인하지 못한 것을 확인된 것처럼 적지 않는다).
-async function serverObserved(app, requestId, status) {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const asked = await sendGet(new URL(`/api/observed?request_id=${requestId}`, app));
-    if (asked.sent && asked.status === 200) {
-      const body = await asked.response.json().catch(() => null);
-      const hit = body?.observations?.find((o) => o.status === status);
-      if (hit) return hit.status;
-    }
-    await new Promise((resolve) => setTimeout(resolve, Number(process.env.ATTACK_CHECK_WAIT_MS ?? 400)));
-  }
-  return null;
-}
-
-// 로그인 없이 보낸 GET 한 건: 실제 상태와 요청 ID, 그리고 서버가 확인해 준 상태만 observed에 적는다.
+// 로그인 없이 보낸 GET 한 건: 실제로 받은 HTTP 상태와 요청 ID만 observed에 적는다(응답을 받지 못했으면 not_run).
 async function anonymousGet(app, path, attackId, expected) {
   const sent = await sendGet(new URL(path, app));
-  const seen = sent.sent ? await serverObserved(app, sent.requestId, sent.status) : null;
-  return { attackId, expected, observed: seen === null ? sent.tag : `${sent.tag}, server_observed=${seen}` };
+  return { attackId, expected, observed: sent.tag };
 }
 
 const notRun = (attackId, expected, why) => ({ attackId, expected, observed: `not_run(미실행): 요청을 보내지 않음, ${why}` });

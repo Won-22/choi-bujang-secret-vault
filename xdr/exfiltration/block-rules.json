@@ -1,0 +1,76 @@
+[
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_exfiltration",
+    "dstip": "203.0.113.50",
+    "expiresAt": "2026-11-03T08:04:07.718Z",
+    "alertIds": [
+      "ex-01",
+      "ex-03"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_exfiltration",
+    "dstip": "198.51.100.40",
+    "expiresAt": "2026-11-03T08:04:07.718Z",
+    "alertIds": [
+      "ex-02",
+      "ex-04"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_exfiltration",
+    "dstip": "203.0.113.55",
+    "expiresAt": "2026-11-03T08:04:07.718Z",
+    "alertIds": [
+      "ex-05"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_exfiltration",
+    "dstip": "192.0.2.90",
+    "expiresAt": "2026-11-03T08:04:07.718Z",
+    "alertIds": [
+      "ex-06"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_exfiltration",
+    "dstip": "198.51.100.45",
+    "expiresAt": "2026-11-03T08:04:07.718Z",
+    "alertIds": [
+      "ex-07"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_exfiltration",
+    "dstip": "203.0.113.60",
+    "expiresAt": "2026-11-03T08:04:07.718Z",
+    "alertIds": [
+      "ex-08"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_exfiltration",
+    "dstip": "203.0.113.61",
+    "expiresAt": "2026-11-03T08:04:07.718Z",
+    "alertIds": [
+      "ex-09"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_exfiltration",
+    "dstip": "198.51.100.46",
+    "expiresAt": "2026-11-03T08:04:07.718Z",
+    "alertIds": [
+      "ex-10"
+    ]
+  }
+]

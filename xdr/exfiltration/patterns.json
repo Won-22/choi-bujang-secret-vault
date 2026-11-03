@@ -1,0 +1,6 @@
+[
+  { "name": "large_transfer_new_destination", "signal": "처음 보는 목적지로 나가는 대용량 전송", "when": "전송량 5천만 바이트 이상이고 설명에 처음 보는 목적지·주소가 있음", "evidence": "MITRE ATT&CK T1048 대체 프로토콜로 유출: 평소 목록에 없는 외부 목적지로의 대용량 전송은 자료를 빼돌리는 형태" },
+  { "name": "repeated_large_transfer", "signal": "같은 목적지로 대용량 전송이 반복됨", "when": "전송량 5천만 바이트 이상이고 반복 5번 이상", "evidence": "MITRE ATT&CK T1041 명령 통로로 유출: 큰 전송의 반복은 한 번에 못 빼낸 자료를 나눠 보내는 형태" },
+  { "name": "mass_file_copy", "signal": "짧은 시간에 파일 수십 건 이상을 한꺼번에 전송", "when": "전송량 5천만 바이트 이상이고 파일 수 50건 이상", "evidence": "MITRE ATT&CK T1041 명령 통로로 유출: 자료실 전체를 통째로 복사하는 전송은 정상 사용 범위를 넘음" },
+  { "name": "off_hours_archive_exit", "signal": "업무 시간 밖의 압축 파일·대용량 반출", "when": "전송량 5천만 바이트 이상이고 설명에 수업·업무 시간 밖이 있음", "evidence": "MITRE ATT&CK T1048 대체 프로토콜로 유출: 사람이 없는 시각의 압축 파일 반출은 도용 계정의 형태" }
+]

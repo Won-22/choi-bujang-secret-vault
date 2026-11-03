@@ -1,0 +1,6 @@
+[
+  { "name": "burst_failures", "signal": "짧은 시간 같은 주소의 로그인 실패 연속", "when": "실패 건수가 30건 이상", "evidence": "MITRE ATT&CK T1110 무차별 대입: 짧은 시간에 몰린 실패 연속은 비밀번호를 하나씩 맞춰 보는 형태" },
+  { "name": "password_spray", "signal": "여러 계정에 같은 비밀번호 대입", "when": "같은 주소가 계정 10개 이상을 시도(계정 목록이 5개 이상이거나 설명에 계정 N개)", "evidence": "MITRE ATT&CK T1110.003 비밀번호 뿌리기: 계정을 바꿔 가며 같은 비밀번호를 넣는 형태" },
+  { "name": "password_variation", "signal": "비밀번호를 조금씩 바꿔 넣는 실패", "when": "설명에 한 글자씩 바꿔 넣는 실패가 있고 규칙 수준 10 이상", "evidence": "MITRE ATT&CK T1110.001 비밀번호 추측: 비슷한 값을 반복해 넣는 형태" },
+  { "name": "no_success_after_failures", "signal": "실패만 쌓이고 성공이 없음", "when": "실패 50건 이상이고 설명에 성공은 없다고 적힘", "evidence": "MITRE ATT&CK T1110 무차별 대입: 정상 사용자는 실패 뒤 성공이 따르지만 공격은 성공 없이 계속됨" }
+]

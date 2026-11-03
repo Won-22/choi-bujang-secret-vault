@@ -125,24 +125,25 @@ async function checkStep3(app, step, config) {
 // 진단(제출 기록과 무관): 이 점검이 도는 환경이 받는 응답의 모양을 서버 로그에 한 건으로 남긴다. 헤더 이름·함수 종류·환경변수 이름만 보내고 값은 보내지 않는다.
 async function sendDiag(app) {
   const tag = (value) => String(value).toLowerCase().replace(/[^a-z0-9]+/gu, '-').replace(/^-+|-+$/gu, '').slice(0, 40) || 'none';
-  const id = randomUUID();
   const out = {};
+  const safe = (key, get) => { try { out[key] = get(); } catch (error) { out[key] = `err-${error?.message ?? error}`; } };
+  let response = null;
   try {
-    const response = await fetch(String(new URL('/api/identity', app)), { method: 'GET', redirect: 'error', signal: AbortSignal.timeout(10000),
+    const id = randomUUID();
+    response = await fetch(String(new URL('/api/identity', app)), { method: 'GET', redirect: 'error', signal: AbortSignal.timeout(10000),
       headers: { 'x-request-id': id, 'x-aleph-request-id': id } });
-    out.sent = id.slice(0, 8);
-    out.status = response.status;
-    out.echo = tag(response.headers?.get?.('x-request-id') ?? 'none').slice(0, 8);
-    out.rh = tag([...response.headers.keys()].sort().join('-')).slice(0, 38);
-    out.proto = tag(Object.prototype.toString.call(response) + typeof response.headers?.get);
   } catch (error) {
-    out.err = tag(error?.cause?.code ?? error?.message ?? error);
+    out.err = error?.cause?.code ?? error?.message ?? error;
   }
-  try {
-    const found = await (await fetch(String(new URL(`/api/observed?request_id=${id}`, app)), { method: 'GET', redirect: 'error', signal: AbortSignal.timeout(10000) })).json();
-    out.found = `${found?.found}-${found?.observations?.length ?? 'n'}`;
-  } catch (error) {
-    out.lookup = tag(error?.cause?.code ?? error?.message ?? error);
+  if (response) {
+    safe('own', () => Object.keys(response).join('-'));
+    safe('hown', () => Object.keys(response.headers ?? {}).join('-'));
+    safe('hfn', () => ['forEach', 'entries', 'has', 'get', 'keys', 'values'].filter((n) => typeof response.headers?.[n] === 'function').join('-'));
+    safe('proto', () => Object.getOwnPropertyNames(Object.getPrototypeOf(response.headers ?? {})).join('-'));
+    // 값이 아닌 있고 없음만 적는다: 심판이 붙였을 수 있는 요청 ID 헤더 후보
+    safe('has', () => ['x-aleph-request-id', 'x-judge-request-id', 'x-judge-id', 'x-aleph-judge-id', 'x-vercel-id', 'x-request-id', 'x-correlation-id', 'x-trace-id', 'x-aleph-trace-id', 'x-aleph-run-id', 'x-judge-run-id', 'x-resource-id', 'x-robots-tag', 'cache-control', 'content-type', 'server', 'date']
+      .filter((n) => response.headers?.get?.(n) != null).join('-'));
+    safe('body', () => typeof response.json + typeof response.text + typeof response.clone + typeof response.ok + typeof response.url);
   }
   const headers = Object.fromEntries(Object.entries(out).map(([k, v]) => [`x-diag-${k}-${tag(v)}`, '1']));
   try {

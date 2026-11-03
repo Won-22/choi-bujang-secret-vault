@@ -62,7 +62,7 @@ export async function observe(request, response, run, record) {
 // GET /api/observed?recent=1[&client=aleph-judge] — 최근 요청을 가린 형태로 돌려준다.
 // 돌려주는 값은 방법·경로 모양·상태·시각·접속 도구 구분·서버 요청 번호뿐이다.
 export function observedApi({ find, recent }) {
-  const mask = (r) => ({ at: r.at, method: r.method, route: r.route, status: r.status, client: r.client ?? 'other', serverRequestId: r.server_request_id ?? null, ...(r.client === 'aleph-judge' || r.client === 'no-ua' ? { shape: r.shape ?? null } : {}) });
+  const mask = (r) => ({ at: r.at, method: r.method, route: r.route, status: r.status, client: r.client ?? 'other', serverRequestId: r.server_request_id ?? null, ...(r.client === 'aleph-judge' || r.client === 'no-ua' ? { requestId: r.request_id ?? null, shape: r.shape ?? null } : {}) });
   return async (request, response) => {
     response.setHeader('Cache-Control', 'no-store');
     if (request.method !== 'GET') return response.status(405).json({ error: 'METHOD_NOT_ALLOWED' });

@@ -59,7 +59,7 @@ test('/api/observed는 요청 ID와 최근 요청을 가린 형태로만 돌려�
   assert.equal((await ask({})).code, 400);
   assert.equal((await ask({ request_id: 'abcdefgh-0001' }, 'POST')).code, 405);
   const recent = await ask({ recent: '1', client: 'aleph-judge' });
-  assert.deepEqual(recent.body.recent, [{ at: 't', method: 'GET', route: '/api/device', status: 401, client: 'aleph-judge', serverRequestId: 'srv-1', shape: null }]);
+  assert.deepEqual(recent.body.recent, [{ at: 't', method: 'GET', route: '/api/device', status: 401, client: 'aleph-judge', serverRequestId: 'srv-1', requestId: null, shape: null }]);
   assert.ok(!JSON.stringify(recent.body).includes('secret-agent') && !JSON.stringify(recent.body).includes('1.2.3.4'));
 });
 

@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import config from '../aleph.config.json' with { type: 'json' };
 
-const COLUMNS = 'at, method, route, status, client, server_request_id, shape';
+const COLUMNS = 'at, method, route, status, client, server_request_id, shape, request_id';
 const BASE_COLUMNS = 'at, method, route, status, client, server_request_id';
 let client;
 const db = () => {

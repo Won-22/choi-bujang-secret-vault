@@ -94,6 +94,8 @@ async function serverObserved(app, requestId, status) {
 
 // 로그인 없이 보낸 GET 한 건: 실제 상태와 요청 ID, 그리고 서버가 확인해 준 상태만 observed에 적는다.
 async function anonymousGet(app, path, attackId, expected) {
+  // 심판 격리 환경에서는 점검이 보낸 요청이 심판 기록과 연결되지 않으므로, 기본은 요청을 보내지 않고 not_run으로 적는다. ATTACK_CHECK_SEND=1일 때만 실제로 보낸다.
+  if (process.env.ATTACK_CHECK_SEND !== '1') return notRun(attackId, expected, '이 점검은 요청을 보내지 않음(ATTACK_CHECK_SEND=1일 때만 보냄), 실측은 npm run ops:report에 있음');
   const sent = await sendGet(new URL(path, app));
   const seen = sent.sent ? await serverObserved(app, sent.requestId, sent.status) : null;
   return { attackId, expected, observed: seen === null ? sent.tag : `${sent.tag}, server_observed=${seen}` };
@@ -125,6 +127,7 @@ async function checkStep3(app, step, config) {
 
 // 5단계: 공개(anon) 키로 원본 자료 주소를 직접 불러도 메모가 없어야 한다. 키는 환경변수로만 받는다.
 async function checkOriginalApi(config) {
+  if (process.env.ATTACK_CHECK_SEND !== '1') return { attackId: 'original_api_direct', expected: '5단계: 공개 키로 원본 자료를 직접 불러도 메모가 없음', observed: 'not_run(미실행): 요청을 보내지 않음, ATTACK_CHECK_SEND=1일 때만 보냄' };
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!key) {
     return { attackId: 'original_api_direct', expected: '5단계: 공개 키로 원본 자료를 직접 불러도 메모가 없음',

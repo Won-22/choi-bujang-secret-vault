@@ -28,6 +28,7 @@ function fakeServer({ remember = true, headers = { 'x-vercel-id': 'icn1::test-00
 async function withFetch(stub, run) {
   const real = globalThis.fetch;
   process.env.ATTACK_CHECK_WAIT_MS = '0';
+  process.env.ATTACK_CHECK_SEND = '1';
   globalThis.fetch = stub;
   try { return await run(); } finally { globalThis.fetch = real; }
 }
@@ -84,4 +85,16 @@ test('중간 장치가 요청 ID를 바꿔 넣어 응답이 다른 ID를 돌려�
   const o = by(await withFetch(stub, () => runAttackChecks(CONFIG)));
   assert.equal(o.static_data_json_gone, 'HTTP 404, request_id=proxy-assigned-0001');
   assert.equal(o.anonymous_list_refused, 'HTTP 401, request_id=proxy-assigned-0001');
+});
+
+test('기본값은 요청을 한 건도 보내지 않고 모두 not_run', async () => {
+  const real = globalThis.fetch;
+  let calls = 0;
+  delete process.env.ATTACK_CHECK_SEND;
+  globalThis.fetch = async () => { calls += 1; return new Response('{}'); };
+  try {
+    const out = await runAttackChecks(CONFIG);
+    assert.equal(calls, 0);
+    assert.ok(out.every((o) => o.observed.startsWith('not_run')));
+  } finally { globalThis.fetch = real; }
 });

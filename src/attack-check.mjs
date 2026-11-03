@@ -11,7 +11,9 @@ async function sendGet(url, headers = {}) {
       redirect: 'error', signal: AbortSignal.timeout(10000) });
     const echoed = response.headers?.get?.('x-request-id');
     const id = typeof echoed === 'string' && ID_PATTERN.test(echoed) ? echoed : requestId;
-    return { response, status: response.status, requestId: id, sent: true, tag: `HTTP ${response.status}, request_id=${id}` };
+    const vercel = response.headers?.get?.('x-vercel-id');
+    const trace = typeof vercel === 'string' && /^[A-Za-z0-9:_-]{8,120}$/u.test(vercel) ? `, x_vercel_id=${vercel}` : '';
+    return { response, status: response.status, requestId: id, sent: true, tag: `HTTP ${response.status}, request_id=${id}${trace}` };
   } catch (error) {
     return { response: null, status: null, requestId: null, sent: false,
       tag: `not_run: 응답을 받지 못함(${error.cause?.code ?? error.message})` };
@@ -118,39 +120,7 @@ async function checkStep3(app, step, config) {
   if (step >= 11) attempts.push(await anonymousGet(app, '/api/device', 'anonymous_device_refused', '11단계: 로그인 없는 GET /api/device는 401/403'));
   attempts.push(notRun('login_note_flow', '3단계: A 로그인 뒤 메모 추가·수정·삭제 가능', '이 스크립트는 로그인 정보를 쓰지 않아 화면과 ops:live에서 확인함'));
   if (step >= 4) attempts.push(notRun('cross_owner_access', '4단계: B가 A의 메모를 읽기·수정·삭제하거나 소유자를 바꾸면 거부', '이 스크립트는 로그인 정보를 쓰지 않아 ops:live에서 확인함'));
-  await sendDiag(app);
   return attempts;
-}
-
-// 진단(제출 기록과 무관): 이 점검이 도는 환경이 받는 응답의 모양을 서버 로그에 한 건으로 남긴다. 헤더 이름·함수 종류·환경변수 이름만 보내고 값은 보내지 않는다.
-async function sendDiag(app) {
-  const tag = (value) => String(value).toLowerCase().replace(/[^a-z0-9]+/gu, '-').replace(/^-+|-+$/gu, '').slice(0, 40) || 'none';
-  const out = {};
-  const safe = (key, get) => { try { out[key] = get(); } catch (error) { out[key] = `err-${error?.message ?? error}`; } };
-  let response = null;
-  try {
-    const id = randomUUID();
-    response = await fetch(String(new URL('/api/identity', app)), { method: 'GET', redirect: 'error', signal: AbortSignal.timeout(10000),
-      headers: { 'x-request-id': id, 'x-aleph-request-id': id } });
-  } catch (error) {
-    out.err = error?.cause?.code ?? error?.message ?? error;
-  }
-  if (response) {
-    safe('own', () => Object.keys(response).join('-'));
-    safe('hown', () => Object.keys(response.headers ?? {}).join('-'));
-    safe('hfn', () => ['forEach', 'entries', 'has', 'get', 'keys', 'values'].filter((n) => typeof response.headers?.[n] === 'function').join('-'));
-    safe('proto', () => Object.getOwnPropertyNames(Object.getPrototypeOf(response.headers ?? {})).join('-'));
-    // 값이 아닌 있고 없음만 적는다: 심판이 붙였을 수 있는 요청 ID 헤더 후보
-    safe('has', () => ['x-aleph-request-id', 'x-judge-request-id', 'x-judge-id', 'x-aleph-judge-id', 'x-vercel-id', 'x-request-id', 'x-correlation-id', 'x-trace-id', 'x-aleph-trace-id', 'x-aleph-run-id', 'x-judge-run-id', 'x-resource-id', 'x-robots-tag', 'cache-control', 'content-type', 'server', 'date']
-      .filter((n) => response.headers?.get?.(n) != null).join('-'));
-    safe('body', () => typeof response.json + typeof response.text + typeof response.clone + typeof response.ok + typeof response.url);
-  }
-  const headers = Object.fromEntries(Object.entries(out).map(([k, v]) => [`x-diag-${k}-${tag(v)}`, '1']));
-  try {
-    await fetch(String(new URL('/api/identity', app)), { method: 'GET', headers, redirect: 'error', signal: AbortSignal.timeout(10000) });
-  } catch {
-    // 진단이 실패해도 점검 결과에는 영향이 없다.
-  }
 }
 
 // 5단계: 공개(anon) 키로 원본 자료 주소를 직접 불러도 메모가 없어야 한다. 키는 환경변수로만 받는다.

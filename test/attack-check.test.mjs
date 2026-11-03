@@ -40,11 +40,11 @@ test('요청마다 randomUUID()로 만든 ID를 보내고 실제 상태와 서�
   assert.equal(new Set(seen.map((x) => x.id)).size, seen.length);
   const idOf = (path) => seen.find((x) => x.path === path).id;
   const o = by(out);
-  assert.equal(o.static_data_json_gone, `HTTP 404, request_id=${idOf('/data.json')}, server_observed=404`);
-  assert.equal(o.anonymous_list_refused, `HTTP 401, request_id=${idOf('/api/notes')}, server_observed=401`);
-  assert.match(o.anonymous_item_refused, /^HTTP 401, request_id=[0-9a-f-]{36}, server_observed=401$/u);
-  assert.match(o.anonymous_device_refused, /^HTTP 401, request_id=[0-9a-f-]{36}, server_observed=401$/u);
-  assert.match(o.anonymous_session_probe, /^HTTP 401, request_id=[0-9a-f-]{36}, server_observed=401$/u);
+  assert.equal(o.static_data_json_gone, `HTTP 404, request_id=${idOf('/data.json')}, x_vercel_id=icn1::test-0001, server_observed=404`);
+  assert.equal(o.anonymous_list_refused, `HTTP 401, request_id=${idOf('/api/notes')}, x_vercel_id=icn1::test-0001, server_observed=401`);
+  assert.match(o.anonymous_item_refused, /^HTTP 401, request_id=[0-9a-f-]{36}, x_vercel_id=icn1::test-0001, server_observed=401$/u);
+  assert.match(o.anonymous_device_refused, /^HTTP 401, request_id=[0-9a-f-]{36}, x_vercel_id=icn1::test-0001, server_observed=401$/u);
+  assert.match(o.anonymous_session_probe, /^HTTP 401, request_id=[0-9a-f-]{36}, x_vercel_id=icn1::test-0001, server_observed=401$/u);
   assert.ok(out.length >= 12 && out.length <= 20);
   assert.equal(new Set(out.map((x) => x.attackId)).size, out.length);
 });
@@ -52,7 +52,7 @@ test('요청마다 randomUUID()로 만든 ID를 보내고 실제 상태와 서�
 test('서버가 그 요청을 기록했다고 확인하지 못하면 server_observed를 적지 않는다', async () => {
   const { stub } = fakeServer({ remember: false });
   const out = await withFetch(stub, () => runAttackChecks(CONFIG));
-  assert.match(by(out).static_data_json_gone, /^HTTP 404, request_id=[0-9a-f-]{36}$/u);
+  assert.match(by(out).static_data_json_gone, /^HTTP 404, request_id=[0-9a-f-]{36}, x_vercel_id=icn1::test-0001$/u);
 });
 
 test('응답 헤더가 모두 걸러진 응답이라도 응답을 받았다면 실제 상태와 요청 ID를 적는다', async () => {

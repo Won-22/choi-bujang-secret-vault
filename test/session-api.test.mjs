@@ -28,5 +28,7 @@ test('갱신과 로그아웃, 지원하지 않는 메서드', async () => {
   const revoked = [];
   assert.equal((await run({ method: 'DELETE', headers: { authorization: 'Bearer tok' } }, {}, revoked)).status, 200);
   assert.deepEqual(revoked, ['tok']);
-  assert.equal((await run({ method: 'GET' })).status, 405);
+  assert.equal((await run({ method: 'GET' })).status, 401);
+  assert.equal((await run({ method: 'GET', headers: { authorization: 'Bearer tok' } })).status, 405);
+  assert.equal((await run({ method: 'PATCH' })).status, 405);
 });

@@ -29,6 +29,8 @@ export function sessionApi({ auth, revoke }) {
       return send(response, 200, { ok: true });
     }
     response.setHeader('Allow', 'POST, PUT, DELETE');
+    // 로그인 없이 세션을 읽으려는 요청은 메서드 오류가 아니라 로그인 필요로 거부한다.
+    if (request.method === 'GET' && !request.headers?.authorization) return send(response, 401, { error: 'LOGIN_REQUIRED' });
     return send(response, 405, { error: 'METHOD_NOT_ALLOWED' });
   };
 }

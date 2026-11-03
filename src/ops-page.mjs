@@ -88,7 +88,7 @@ const tableRows = (rows) => rows.map((r) => `<tr>
 <td>${badge(r.status)}</td><td><small>${esc(r.requestId ?? '—')}</small></td><td><small>${esc(r.serverObserved ?? '—')}</small></td><td><small>${r.serverId ? `서버 ${esc(r.serverId)}` : '—'}</small></td>
 <td><small>${esc(r.checkedAt ?? '시각 기록 없음')}</small></td><td><small>${esc(r.note ?? '')}</small></td></tr>`).join('\n');
 
-export function renderOps(report) {
+export function renderOps(report, buildCommit) {
   const problems = validateReport(report);
   if (problems.length) throw new Error(`탈환 작전실 기록이 맞지 않습니다: ${problems[0]}`);
   const counts = countBy(report.rows);
@@ -134,7 +134,7 @@ h1{font-size:clamp(28px,6vw,42px);margin:8px 0}h2{margin:0 0 6px;font-size:20px}
 <div>연결 미확인<b>${counts['연결 미확인']}</b></div>
 <div>미실행<b>${counts['미실행']}</b></div>
 </div>
-<p>기록 시각 ${esc(report.generatedAt)} · 확인한 주소 ${esc(report.baseUrl)} · 검사한 배포 커밋 <code>${esc(report.inspectedCommit)}</code>(<code>/aleph.json</code> 기준) · 단계 ${esc(report.deployedStep)} · 정책 사본 해시 <code>${esc(report.policySnapshotHash)}</code></p>
+<p>기록 시각 ${esc(report.generatedAt)} · 확인한 주소 ${esc(report.baseUrl)} · 검사한 배포 커밋 <code>${esc(report.inspectedCommit)}</code>(<code>/aleph.json</code> 기준)${/^[0-9a-f]{40}$/iu.test(buildCommit ?? '') ? ` · 이 화면을 배포한 커밋 <code>${esc(buildCommit)}</code>(기록은 위 커밋의 배포에서 수집한 것이라 다를 수 있음)` : ''} · 단계 ${esc(report.deployedStep)} · 정책 사본 해시 <code>${esc(report.policySnapshotHash)}</code></p>
 ${panels}
 <h2>단계별 기록(1~12단계)</h2>
 <div class="wrap"><table style="min-width:520px"><thead><tr><th>단계</th><th>시험</th><th>통과</th><th>실패</th><th>직접 확인</th><th>연결 미확인</th><th>미실행</th></tr></thead><tbody>

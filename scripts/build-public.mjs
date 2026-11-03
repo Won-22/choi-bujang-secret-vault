@@ -11,7 +11,7 @@ if (config.step < 2) {
 // 탈환 작전실(/ops)은 ops/report.json의 기록으로 만든다. 기록이 없거나 맞지 않으면 배포를 막지 않고 그 사실을 화면에 적는다.
 try {
   const report = JSON.parse(await readFile(resolve(root, 'ops', 'report.json'), 'utf8'));
-  await writeFile(resolve(root, 'public', 'ops.html'), renderOps(report), 'utf8');
+  await writeFile(resolve(root, 'public', 'ops.html'), renderOps(report, process.env.VERCEL_GIT_COMMIT_SHA), 'utf8');
   console.log('탈환 작전실을 public/ops.html에 만들었습니다.');
 } catch (error) {
   await writeFile(resolve(root, 'public', 'ops.html'), `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>탈환 작전실</title></head><body><h1>탈환 작전실</h1><p>시험 기록(ops/report.json)을 읽지 못했습니다. 기록이 없으면 통과한 시험도 없습니다.</p></body></html>

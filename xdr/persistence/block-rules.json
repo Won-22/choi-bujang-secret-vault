@@ -1,0 +1,66 @@
+[
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_persistence",
+    "srcip": "203.0.113.12",
+    "expiresAt": "2026-11-03T07:58:54.360Z",
+    "alertIds": [
+      "ps-01",
+      "ps-02"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_persistence",
+    "srcip": "198.51.100.12",
+    "expiresAt": "2026-11-03T07:58:54.360Z",
+    "alertIds": [
+      "ps-03"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_persistence",
+    "srcip": "192.0.2.12",
+    "expiresAt": "2026-11-03T07:58:54.360Z",
+    "alertIds": [
+      "ps-04"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_persistence",
+    "srcip": "203.0.113.19",
+    "expiresAt": "2026-11-03T07:58:54.360Z",
+    "alertIds": [
+      "ps-05"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_persistence",
+    "srcip": "198.51.100.19",
+    "expiresAt": "2026-11-03T07:58:54.360Z",
+    "alertIds": [
+      "ps-06"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_persistence",
+    "srcip": "192.0.2.19",
+    "expiresAt": "2026-11-03T07:58:54.360Z",
+    "alertIds": [
+      "ps-07"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_persistence",
+    "srcip": "203.0.113.33",
+    "expiresAt": "2026-11-03T07:58:54.360Z",
+    "alertIds": [
+      "ps-08"
+    ]
+  }
+]

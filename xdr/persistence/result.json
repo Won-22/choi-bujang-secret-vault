@@ -1,0 +1,155 @@
+{
+  "schema": "aleph.xdr.result.v1",
+  "moduleKey": "persistence",
+  "decisions": [
+    {
+      "alertId": "ps-01",
+      "action": "block",
+      "confidence": 0.9,
+      "reason": "패턴 unsigned_service_or_task, temp_folder_target와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "ps-02",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 temp_folder_target와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "ps-03",
+      "action": "block",
+      "confidence": 0.85,
+      "reason": "패턴 not_in_usual_list와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "ps-04",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 unsigned_service_or_task와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "ps-05",
+      "action": "block",
+      "confidence": 0.85,
+      "reason": "패턴 temp_folder_target와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "ps-06",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 unsigned_service_or_task와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "ps-07",
+      "action": "block",
+      "confidence": 0.85,
+      "reason": "패턴 temp_folder_target와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "ps-08",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 not_in_usual_list와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "ps-09",
+      "action": "alert",
+      "confidence": 0.56,
+      "reason": "자동 실행 항목이 있으나 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "ps-10",
+      "action": "alert",
+      "confidence": 0.5700000000000001,
+      "reason": "자동 실행 항목이 있으나 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "ps-11",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "자동 실행 항목이 있으나 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "ps-12",
+      "action": "alert",
+      "confidence": 0.56,
+      "reason": "자동 실행 항목이 있으나 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "ps-13",
+      "action": "alert",
+      "confidence": 0.58,
+      "reason": "자동 실행 항목이 있으나 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "ps-14",
+      "action": "alert",
+      "confidence": 0.56,
+      "reason": "자동 실행 항목이 있으나 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "ps-15",
+      "action": "alert",
+      "confidence": 0.5700000000000001,
+      "reason": "자동 실행 항목이 있으나 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "ps-16",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "자동 실행 항목이 있으나 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "ps-17",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "지속 장치 신호 없음 또는 평소 동작, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "ps-18",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "지속 장치 신호 없음 또는 평소 동작, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "ps-19",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "지속 장치 신호 없음 또는 평소 동작, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "ps-20",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "지속 장치 신호 없음 또는 평소 동작, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "ps-21",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "지속 장치 신호 없음 또는 평소 동작, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "ps-22",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "지속 장치 신호 없음 또는 평소 동작, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "ps-23",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "지속 장치 신호 없음 또는 평소 동작, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "ps-24",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "지속 장치 신호 없음 또는 평소 동작, 정상 이벤트로 기록"
+    }
+  ],
+  "counts": {
+    "block": 8,
+    "alert": 8,
+    "record": 8
+  }
+}

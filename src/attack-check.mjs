@@ -7,7 +7,7 @@ const ID_PATTERN = /^[A-Za-z0-9._:-]{8,100}$/u;
 async function sendGet(url, headers = {}) {
   const requestId = randomUUID();
   try {
-    const response = await fetch(url, { headers: { ...headers, 'x-request-id': requestId, 'x-aleph-request-id': requestId },
+    const response = await fetch(String(url), { method: 'GET', headers: { ...headers, 'x-request-id': requestId, 'x-aleph-request-id': requestId },
       redirect: 'error', signal: AbortSignal.timeout(10000) });
     const echoed = response.headers?.get?.('x-request-id');
     const id = typeof echoed === 'string' && ID_PATTERN.test(echoed) ? echoed : requestId;

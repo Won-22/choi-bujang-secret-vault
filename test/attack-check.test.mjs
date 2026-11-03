@@ -17,7 +17,7 @@ function fakeServer({ remember = true, headers = { 'x-vercel-id': 'icn1::test-00
       const found = log.filter((x) => x.id === wanted).map((x) => ({ at: 't', method: 'GET', route: x.path, status: x.status }));
       return new Response(JSON.stringify({ found: found.length > 0, observations: found }), { status: 200, headers });
     }
-    if (!u.searchParams.has('d1')) seen.push({ path: u.pathname, id, alt: init.headers['x-aleph-request-id'] });
+    if (id) seen.push({ path: u.pathname, id, alt: init.headers['x-aleph-request-id'] });
     const status = u.pathname === '/data.json' ? 404 : 401;
     if (remember) log.push({ id, path: u.pathname, status });
     return new Response('{"error":"X"}', { status, headers });
@@ -60,7 +60,7 @@ test('응답 헤더가 모두 걸러진 응답이라도 응답을 받았다면 �
   const log = [];
   const stub = async (url, init) => {
     const u = new URL(String(url));
-    if (u.pathname !== '/api/observed' && !u.searchParams.has('d1')) log.push({ path: u.pathname, id: init.headers['x-request-id'] });
+    if (u.pathname !== '/api/observed' && init.headers['x-request-id']) log.push({ path: u.pathname, id: init.headers['x-request-id'] });
     return new Response(u.pathname === '/api/observed' ? '{"found":false,"observations":[]}' : '{"error":"X"}', { status: u.pathname === '/data.json' ? 404 : u.pathname === '/api/observed' ? 200 : 401 });
   };
   const o = by(await withFetch(stub, () => runAttackChecks(CONFIG)));

@@ -125,22 +125,31 @@ async function checkStep3(app, step, config) {
 // 진단(제출 기록과 무관): 이 점검이 도는 환경이 받는 응답의 모양을 서버 로그에 한 건으로 남긴다. 헤더 이름·함수 종류·환경변수 이름만 보내고 값은 보내지 않는다.
 async function sendDiag(app) {
   const tag = (value) => String(value).toLowerCase().replace(/[^a-z0-9]+/gu, '-').replace(/^-+|-+$/gu, '').slice(0, 40) || 'none';
-  const run = async (label, url, headers = {}) => {
-    try {
-      const response = await fetch(String(url), { method: 'GET', headers, redirect: 'error', signal: AbortSignal.timeout(10000) });
-      return { label, out: `s${response.status}`, response };
-    } catch (error) {
-      return { label, out: `e-${tag(error?.cause?.code ?? error?.message ?? error)}`, response: null };
-    }
-  };
-  // 같은 대상을 쿼리 없이/쿼리와 함께 불러 보고, 서버 관측 조회가 이 환경에서 되는지 본다. 결과는 요청 헤더 이름으로 남긴다(서버는 값이 아닌 이름만 기록).
-  const plain = await run('plain', new URL('/api/identity', app));
-  const withQuery = await run('query', new URL('/api/identity?q=1', app));
-  const lookup = await run('lookup', new URL('/api/observed?request_id=00000000-0000-4000-8000-000000000000', app));
-  let body = 'nobody';
-  try { body = tag(JSON.stringify(await lookup.response.json()).slice(0, 30)); } catch { /* 본문을 읽지 못하면 nobody */ }
-  const headers = { 'x-diag-plain': plain.out, 'x-diag-query': withQuery.out, 'x-diag-lookup': lookup.out, 'x-diag-body': body, 'x-diag-fetch': tag(String(globalThis.fetch).slice(0, 30)) };
-  await run('report', new URL('/api/identity', app), Object.fromEntries(Object.entries(headers).map(([k, v]) => [`${k}-${v}`, '1'])));
+  const id = randomUUID();
+  const out = {};
+  try {
+    const response = await fetch(String(new URL('/api/identity', app)), { method: 'GET', redirect: 'error', signal: AbortSignal.timeout(10000),
+      headers: { 'x-request-id': id, 'x-aleph-request-id': id } });
+    out.sent = id.slice(0, 8);
+    out.status = response.status;
+    out.echo = tag(response.headers?.get?.('x-request-id') ?? 'none').slice(0, 8);
+    out.rh = tag([...response.headers.keys()].sort().join('-')).slice(0, 38);
+    out.proto = tag(Object.prototype.toString.call(response) + typeof response.headers?.get);
+  } catch (error) {
+    out.err = tag(error?.cause?.code ?? error?.message ?? error);
+  }
+  try {
+    const found = await (await fetch(String(new URL(`/api/observed?request_id=${id}`, app)), { method: 'GET', redirect: 'error', signal: AbortSignal.timeout(10000) })).json();
+    out.found = `${found?.found}-${found?.observations?.length ?? 'n'}`;
+  } catch (error) {
+    out.lookup = tag(error?.cause?.code ?? error?.message ?? error);
+  }
+  const headers = Object.fromEntries(Object.entries(out).map(([k, v]) => [`x-diag-${k}-${tag(v)}`, '1']));
+  try {
+    await fetch(String(new URL('/api/identity', app)), { method: 'GET', headers, redirect: 'error', signal: AbortSignal.timeout(10000) });
+  } catch {
+    // 진단이 실패해도 점검 결과에는 영향이 없다.
+  }
 }
 
 // 5단계: 공개(anon) 키로 원본 자료 주소를 직접 불러도 메모가 없어야 한다. 키는 환경변수로만 받는다.

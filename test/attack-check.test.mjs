@@ -33,18 +33,18 @@ async function withFetch(stub, run) {
 }
 const by = (out) => Object.fromEntries(out.map((o) => [o.attackId, o.observed]));
 
-test('요청마다 randomUUID()로 만든 ID를 보내고 실제로 받은 상태와 요청 ID만 적는다', async () => {
+test('요청마다 randomUUID()로 만든 ID를 보내고 실제 상태와 서버가 확인한 상태를 적는다', async () => {
   const { stub, seen } = fakeServer();
   const out = await withFetch(stub, () => runAttackChecks(CONFIG));
   assert.ok(seen.every((x) => UUID4.test(x.id) && x.alt === x.id));
   assert.equal(new Set(seen.map((x) => x.id)).size, seen.length);
   const idOf = (path) => seen.find((x) => x.path === path).id;
   const o = by(out);
-  assert.equal(o.static_data_json_gone, `HTTP 404, request_id=${idOf('/data.json')}`);
-  assert.equal(o.anonymous_list_refused, `HTTP 401, request_id=${idOf('/api/notes')}`);
-  assert.match(o.anonymous_item_refused, /^HTTP 401, request_id=[0-9a-f-]{36}$/u);
-  assert.match(o.anonymous_device_refused, /^HTTP 401, request_id=[0-9a-f-]{36}$/u);
-  assert.match(o.anonymous_session_probe, /^HTTP 401, request_id=[0-9a-f-]{36}$/u);
+  assert.equal(o.static_data_json_gone, `HTTP 404, request_id=${idOf('/data.json')}, server_observed=404`);
+  assert.equal(o.anonymous_list_refused, `HTTP 401, request_id=${idOf('/api/notes')}, server_observed=401`);
+  assert.match(o.anonymous_item_refused, /^HTTP 401, request_id=[0-9a-f-]{36}, server_observed=401$/u);
+  assert.match(o.anonymous_device_refused, /^HTTP 401, request_id=[0-9a-f-]{36}, server_observed=401$/u);
+  assert.match(o.anonymous_session_probe, /^HTTP 401, request_id=[0-9a-f-]{36}, server_observed=401$/u);
   assert.ok(out.length >= 12 && out.length <= 20);
   assert.equal(new Set(out.map((x) => x.attackId)).size, out.length);
 });
@@ -56,7 +56,7 @@ test('서버가 그 요청을 기록했다고 확인하지 못하면 server_obse
 });
 
 test('응답 헤더가 모두 걸러진 응답이라도 응답을 받았다면 실제 상태와 요청 ID를 적는다', async () => {
-  // 심판 환경처럼 서버 흔적 헤더(x-vercel-id, x-request-id)가 없는 응답.
+  // 심판 환경처럼 서버 흔적 헤더(x-vercel-id, x-request-id)가 없는 응답. /api/observed 확인은 되지 않아 server_observed는 없다.
   const log = [];
   const stub = async (url, init) => {
     const u = new URL(String(url));

@@ -1,0 +1,155 @@
+{
+  "schema": "aleph.xdr.result.v1",
+  "moduleKey": "known-cve",
+  "decisions": [
+    {
+      "alertId": "kc-01",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 jndi_lookup_in_header와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "kc-02",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 jndi_lookup_in_url와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "kc-03",
+      "action": "block",
+      "confidence": 0.9,
+      "reason": "패턴 jndi_lookup_in_url, repeated_lookup와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "kc-04",
+      "action": "block",
+      "confidence": 0.9,
+      "reason": "패턴 jndi_lookup_in_header, repeated_lookup와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "kc-05",
+      "action": "block",
+      "confidence": 0.9,
+      "reason": "패턴 jndi_lookup_in_url, vuln_scanner_trace와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "kc-06",
+      "action": "block",
+      "confidence": 0.88,
+      "reason": "패턴 jndi_lookup_in_url, repeated_lookup와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "kc-07",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 jndi_lookup_in_header와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "kc-08",
+      "action": "block",
+      "confidence": 0.88,
+      "reason": "패턴 jndi_lookup_in_header, jndi_lookup_in_url와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "kc-09",
+      "action": "alert",
+      "confidence": 0.56,
+      "reason": "취약점 관련 표기가 있으나 악용 구문은 없음"
+    },
+    {
+      "alertId": "kc-10",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "취약점 관련 표기가 있으나 악용 구문은 없음"
+    },
+    {
+      "alertId": "kc-11",
+      "action": "alert",
+      "confidence": 0.5700000000000001,
+      "reason": "취약점 관련 표기가 있으나 악용 구문은 없음"
+    },
+    {
+      "alertId": "kc-12",
+      "action": "alert",
+      "confidence": 0.56,
+      "reason": "취약점 관련 표기가 있으나 악용 구문은 없음"
+    },
+    {
+      "alertId": "kc-13",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "취약점 관련 표기가 있으나 악용 구문은 없음"
+    },
+    {
+      "alertId": "kc-14",
+      "action": "alert",
+      "confidence": 0.5700000000000001,
+      "reason": "취약점 관련 표기가 있으나 악용 구문은 없음"
+    },
+    {
+      "alertId": "kc-15",
+      "action": "alert",
+      "confidence": 0.56,
+      "reason": "취약점 관련 표기가 있으나 악용 구문은 없음"
+    },
+    {
+      "alertId": "kc-16",
+      "action": "alert",
+      "confidence": 0.58,
+      "reason": "취약점 관련 표기가 있으나 악용 구문은 없음"
+    },
+    {
+      "alertId": "kc-17",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "악용 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "kc-18",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "악용 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "kc-19",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "악용 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "kc-20",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "악용 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "kc-21",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "악용 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "kc-22",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "악용 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "kc-23",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "악용 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "kc-24",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "악용 신호 없음, 정상 이벤트로 기록"
+    }
+  ],
+  "counts": {
+    "block": 8,
+    "alert": 8,
+    "record": 8
+  }
+}

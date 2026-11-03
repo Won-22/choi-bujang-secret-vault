@@ -1,0 +1,66 @@
+[
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_known_cve",
+    "srcip": "203.0.113.10",
+    "expiresAt": "2026-11-03T07:55:42.078Z",
+    "alertIds": [
+      "kc-01",
+      "kc-02"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_known_cve",
+    "srcip": "198.51.100.16",
+    "expiresAt": "2026-11-03T07:55:42.078Z",
+    "alertIds": [
+      "kc-03"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_known_cve",
+    "srcip": "192.0.2.16",
+    "expiresAt": "2026-11-03T07:55:42.078Z",
+    "alertIds": [
+      "kc-04"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_known_cve",
+    "srcip": "203.0.113.24",
+    "expiresAt": "2026-11-03T07:55:42.078Z",
+    "alertIds": [
+      "kc-05"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_known_cve",
+    "srcip": "198.51.100.24",
+    "expiresAt": "2026-11-03T07:55:42.078Z",
+    "alertIds": [
+      "kc-06"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_known_cve",
+    "srcip": "192.0.2.24",
+    "expiresAt": "2026-11-03T07:55:42.078Z",
+    "alertIds": [
+      "kc-07"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_known_cve",
+    "srcip": "203.0.113.31",
+    "expiresAt": "2026-11-03T07:55:42.078Z",
+    "alertIds": [
+      "kc-08"
+    ]
+  }
+]

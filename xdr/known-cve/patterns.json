@@ -1,0 +1,6 @@
+[
+  { "name": "jndi_lookup_in_header", "signal": "요청 머리글 안의 원격 조회 구문(jndi 형태)", "when": "User-Agent 같은 머리글 값에 ${jndi:ldap://… 형태가 있음", "evidence": "CVE-2021-44228(Log4Shell), MITRE ATT&CK T1190: 로그에 남는 머리글에 jndi 조회 구문을 넣어 원격 코드를 불러오게 함" },
+  { "name": "jndi_lookup_in_url", "signal": "요청 주소·인자 안의 원격 조회 구문(jndi 형태)", "when": "주소나 쿼리 인자에 ${jndi:ldap://… 형태가 있음", "evidence": "CVE-2021-44228(Log4Shell), MITRE ATT&CK T1190: 검색어·로그인 이동 인자로 같은 구문을 전달하는 형태" },
+  { "name": "repeated_lookup", "signal": "같은 구문의 반복 시도", "when": "원격 조회 구문이 있고 반복 3번 이상", "evidence": "MITRE ATT&CK T1190: 한 주소가 같은 악용 구문을 되풀이해 넣는 것은 자동화된 시도의 흔적" },
+  { "name": "vuln_scanner_trace", "signal": "알려진 취약점 점검 도구의 흔적", "when": "원격 조회 구문이 있고 설명에 점검 흔적이 있음", "evidence": "MITRE ATT&CK T1190: 취약점 점검 도구가 상태 확인 주소 등에 같은 구문을 흘려 보는 형태" }
+]

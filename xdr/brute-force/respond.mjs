@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, '..', '..');
 const BLOCK_AT = 0.85;
+const KEY = 'brute-force';
 const TTL_MS = 60 * 60 * 1000;
 
 // decide 결과(result.json)와 경보를 받아 차단 후보만 거부 규칙으로, 애매한 시도는 알림 줄로 만든다.
@@ -21,7 +22,7 @@ export function respond({ decisions, alerts, now = Date.now() }) {
     rules.set(ip, rule);
   }
   const alertLines = decisions.filter((d) => d.action === 'alert')
-    .map((d) => `${new Date(now).toISOString()} alert ${d.alertId} 확신도 ${d.confidence.toFixed(2)} ${d.reason}`);
+    .map((d) => `${new Date(now).toISOString()} [${KEY}] alert ${d.alertId} 확신도 ${d.confidence.toFixed(2)} ${d.reason}`);
   return { rules: [...rules.values()], alertLines };
 }
 
@@ -30,7 +31,10 @@ if (process.argv[1] && join(process.argv[1]) === fileURLToPath(import.meta.url))
   const { alerts } = JSON.parse(await readFile(join(root, 'xdr', 'fixtures', 'brute-force.json'), 'utf8'));
   const { rules, alertLines } = respond({ decisions, alerts });
   await writeFile(join(here, 'block-rules.json'), `${JSON.stringify(rules, null, 2)}\n`, 'utf8');
-  // shortcut: 실행할 때마다 알림 로그를 새로 쓴다(쌓기 아님), 실제 운영에서 쌓으려면 appendFile로 바꾼다.
-  await writeFile(join(root, 'xdr', 'alerts.log'), alertLines.length ? `${alertLines.join('\n')}\n` : '', 'utf8');
+  // 같은 모듈의 옛 알림 줄만 새 줄로 바꾸고 다른 모듈의 줄은 남긴다.
+  const logFile = join(root, 'xdr', 'alerts.log');
+  const kept = (await readFile(logFile, 'utf8').catch(() => '')).split('\n').filter((l) => l && !l.includes(`[${KEY}]`));
+  const all = [...kept, ...alertLines];
+  await writeFile(logFile, all.length ? `${all.join('\n')}\n` : '', 'utf8');
   console.log(`차단 규칙 ${rules.length}개, 알림 ${alertLines.length}줄`);
 }

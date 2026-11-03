@@ -1,0 +1,6 @@
+[
+  { "name": "sql_injection_repeat", "signal": "요청 인자 안의 SQL 구문 표기가 반복됨", "when": "설명에 SQL 구문·표기·표식 또는 데이터베이스 조회를 이어 붙임이 있고 반복 5번 이상", "evidence": "MITRE ATT&CK T1190 외부 공개 앱 악용: 한 주소의 반복된 SQL 구문 표기는 주입 시도 형태" },
+  { "name": "script_injection_repeat", "signal": "요청 인자 안의 스크립트 삽입 표식이 반복됨", "when": "설명에 스크립트 삽입 표기·표식이 있고 반복 5번 이상", "evidence": "MITRE ATT&CK T1190 외부 공개 앱 악용: 입력 칸에 스크립트 태그를 반복해 넣는 형태" },
+  { "name": "path_traversal_repeat", "signal": "경로를 거슬러 올라가는(../) 표기가 반복됨", "when": "설명에 경로를 거슬러 올라가는·경로 이탈 표기가 있고 반복 5번 이상", "evidence": "MITRE ATT&CK T1190 외부 공개 앱 악용: 허용되지 않은 경로로 올라가려는 반복 요청" },
+  { "name": "command_separator_repeat", "signal": "명령 구분자 표기가 연속 요청에 반복됨", "when": "설명에 명령 구분자 표기가 있고 반복 5번 이상", "evidence": "MITRE ATT&CK T1190 외부 공개 앱 악용: 입력값 뒤에 명령을 이어 붙이려는 형태" }
+]

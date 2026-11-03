@@ -1,0 +1,167 @@
+{
+  "schema": "aleph.xdr.result.v1",
+  "moduleKey": "web-injection",
+  "decisions": [
+    {
+      "alertId": "wi-01",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 sql_injection_repeat와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "wi-02",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 script_injection_repeat와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "wi-03",
+      "action": "block",
+      "confidence": 0.85,
+      "reason": "패턴 path_traversal_repeat와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "wi-04",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 sql_injection_repeat와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "wi-05",
+      "action": "block",
+      "confidence": 0.88,
+      "reason": "패턴 sql_injection_repeat, script_injection_repeat와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "wi-06",
+      "action": "block",
+      "confidence": 0.85,
+      "reason": "패턴 command_separator_repeat와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "wi-07",
+      "action": "block",
+      "confidence": 0.87,
+      "reason": "패턴 path_traversal_repeat와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "wi-08",
+      "action": "block",
+      "confidence": 0.85,
+      "reason": "패턴 sql_injection_repeat와 뚜렷하게 맞음"
+    },
+    {
+      "alertId": "wi-09",
+      "action": "alert",
+      "confidence": 0.56,
+      "reason": "주입처럼 보이나 반복·표식이 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "wi-10",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "주입처럼 보이나 반복·표식이 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "wi-11",
+      "action": "alert",
+      "confidence": 0.5700000000000001,
+      "reason": "주입처럼 보이나 반복·표식이 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "wi-12",
+      "action": "alert",
+      "confidence": 0.56,
+      "reason": "주입처럼 보이나 반복·표식이 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "wi-13",
+      "action": "alert",
+      "confidence": 0.55,
+      "reason": "주입처럼 보이나 반복·표식이 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "wi-14",
+      "action": "alert",
+      "confidence": 0.5700000000000001,
+      "reason": "주입처럼 보이나 반복·표식이 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "wi-15",
+      "action": "alert",
+      "confidence": 0.56,
+      "reason": "주입처럼 보이나 반복·표식이 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "wi-16",
+      "action": "alert",
+      "confidence": 0.58,
+      "reason": "주입처럼 보이나 반복·표식이 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "wi-17",
+      "action": "alert",
+      "confidence": 0.56,
+      "reason": "주입처럼 보이나 반복·표식이 패턴 기준에 못 미침"
+    },
+    {
+      "alertId": "wi-18",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "주입 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "wi-19",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "주입 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "wi-20",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "주입 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "wi-21",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "주입 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "wi-22",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "주입 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "wi-23",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "주입 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "wi-24",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "주입 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "wi-25",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "주입 신호 없음, 정상 이벤트로 기록"
+    },
+    {
+      "alertId": "wi-26",
+      "action": "record",
+      "confidence": 0.1,
+      "reason": "주입 신호 없음, 정상 이벤트로 기록"
+    }
+  ],
+  "counts": {
+    "block": 8,
+    "alert": 9,
+    "record": 9
+  }
+}

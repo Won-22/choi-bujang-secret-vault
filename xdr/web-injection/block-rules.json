@@ -1,0 +1,66 @@
+[
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_web_injection",
+    "srcip": "203.0.113.10",
+    "expiresAt": "2026-11-03T07:50:17.588Z",
+    "alertIds": [
+      "wi-01",
+      "wi-02"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_web_injection",
+    "srcip": "198.51.100.15",
+    "expiresAt": "2026-11-03T07:50:17.588Z",
+    "alertIds": [
+      "wi-03"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_web_injection",
+    "srcip": "192.0.2.15",
+    "expiresAt": "2026-11-03T07:50:17.588Z",
+    "alertIds": [
+      "wi-04"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_web_injection",
+    "srcip": "203.0.113.18",
+    "expiresAt": "2026-11-03T07:50:17.588Z",
+    "alertIds": [
+      "wi-05"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_web_injection",
+    "srcip": "198.51.100.18",
+    "expiresAt": "2026-11-03T07:50:17.588Z",
+    "alertIds": [
+      "wi-06"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_web_injection",
+    "srcip": "192.0.2.21",
+    "expiresAt": "2026-11-03T07:50:17.588Z",
+    "alertIds": [
+      "wi-07"
+    ]
+  },
+  {
+    "decision": "deny",
+    "reasonCode": "xdr_web_injection",
+    "srcip": "203.0.113.22",
+    "expiresAt": "2026-11-03T07:50:17.588Z",
+    "alertIds": [
+      "wi-08"
+    ]
+  }
+]

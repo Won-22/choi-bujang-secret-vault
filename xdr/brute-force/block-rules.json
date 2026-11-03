@@ -3,7 +3,7 @@
     "decision": "deny",
     "reasonCode": "xdr_brute_force",
     "srcip": "203.0.113.10",
-    "expiresAt": "2026-11-03T07:45:44.371Z",
+    "expiresAt": "2026-11-03T07:50:17.493Z",
     "alertIds": [
       "bf-01",
       "bf-02"
@@ -13,7 +13,7 @@
     "decision": "deny",
     "reasonCode": "xdr_brute_force",
     "srcip": "198.51.100.20",
-    "expiresAt": "2026-11-03T07:45:44.371Z",
+    "expiresAt": "2026-11-03T07:50:17.493Z",
     "alertIds": [
       "bf-03"
     ]
@@ -22,7 +22,7 @@
     "decision": "deny",
     "reasonCode": "xdr_brute_force",
     "srcip": "192.0.2.30",
-    "expiresAt": "2026-11-03T07:45:44.371Z",
+    "expiresAt": "2026-11-03T07:50:17.493Z",
     "alertIds": [
       "bf-04"
     ]
@@ -31,7 +31,7 @@
     "decision": "deny",
     "reasonCode": "xdr_brute_force",
     "srcip": "203.0.113.21",
-    "expiresAt": "2026-11-03T07:45:44.371Z",
+    "expiresAt": "2026-11-03T07:50:17.493Z",
     "alertIds": [
       "bf-05"
     ]
@@ -40,7 +40,7 @@
     "decision": "deny",
     "reasonCode": "xdr_brute_force",
     "srcip": "198.51.100.44",
-    "expiresAt": "2026-11-03T07:45:44.371Z",
+    "expiresAt": "2026-11-03T07:50:17.493Z",
     "alertIds": [
       "bf-06"
     ]
@@ -49,7 +49,7 @@
     "decision": "deny",
     "reasonCode": "xdr_brute_force",
     "srcip": "203.0.113.15",
-    "expiresAt": "2026-11-03T07:45:44.371Z",
+    "expiresAt": "2026-11-03T07:50:17.493Z",
     "alertIds": [
       "bf-07"
     ]
@@ -58,7 +58,7 @@
     "decision": "deny",
     "reasonCode": "xdr_brute_force",
     "srcip": "192.0.2.18",
-    "expiresAt": "2026-11-03T07:45:44.371Z",
+    "expiresAt": "2026-11-03T07:50:17.493Z",
     "alertIds": [
       "bf-08"
     ]
@@ -67,7 +67,7 @@
     "decision": "deny",
     "reasonCode": "xdr_brute_force",
     "srcip": "198.51.100.8",
-    "expiresAt": "2026-11-03T07:45:44.371Z",
+    "expiresAt": "2026-11-03T07:50:17.493Z",
     "alertIds": [
       "bf-09"
     ]
@@ -76,7 +76,7 @@
     "decision": "deny",
     "reasonCode": "xdr_brute_force",
     "srcip": "203.0.113.40",
-    "expiresAt": "2026-11-03T07:45:44.371Z",
+    "expiresAt": "2026-11-03T07:50:17.493Z",
     "alertIds": [
       "bf-10"
     ]

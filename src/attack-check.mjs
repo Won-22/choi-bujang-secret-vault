@@ -124,15 +124,23 @@ async function checkStep3(app, step, config) {
 
 // 진단(제출 기록과 무관): 이 점검이 도는 환경이 받는 응답의 모양을 서버 로그에 한 건으로 남긴다. 헤더 이름·함수 종류·환경변수 이름만 보내고 값은 보내지 않는다.
 async function sendDiag(app) {
+  const part = {};
+  const take = (key, get) => { try { part[key] = String(get()).slice(0, 80); } catch (error) { part[key] = `err:${error?.message ?? error}`.slice(0, 80); } };
+  let probe = null;
   try {
-    const probe = await fetch(String(new URL('/api/identity', app)), { method: 'GET', redirect: 'error', signal: AbortSignal.timeout(10000) });
-    const names = [...(probe.headers?.keys?.() ?? [])].sort().join(',');
-    const env = Object.keys(globalThis.process?.env ?? {}).filter((k) => /aleph|judge|run|trace|request|sandbox|ci/iu.test(k)).sort().join(',');
-    const fn = String(globalThis.fetch).replace(/s+/gu, ' ');
+    probe = await fetch(String(new URL('/api/identity', app)), { method: 'GET', redirect: 'error', signal: AbortSignal.timeout(10000) });
+  } catch (error) {
+    part.d0 = `probe_err:${error?.cause?.code ?? error?.message ?? error}`.slice(0, 80);
+  }
+  take('d1', () => [...probe.headers.keys()].sort().join(','));
+  take('d3', () => [globalThis.process?.version, probe.type, probe.redirected, probe.status, typeof probe.headers?.keys].join('|'));
+  take('d4', () => String(globalThis.fetch).replace(/s+/gu, ' '));
+  take('d5', () => Object.keys(globalThis.process?.env ?? {}).filter((k) => /aleph|judge|run|trace|request|sandbox|ci/iu.test(k)).sort().join(','));
+  take('d6', () => Object.keys(globalThis.process?.env ?? {}).length);
+  try {
     const url = new URL('/api/identity', app);
-    const parts = { d1: names.slice(0, 80), d2: names.slice(80, 160), d3: [globalThis.process?.version, probe.type, probe.redirected, probe.status].join('|'),
-      d4: fn.slice(0, 80), d5: env.slice(0, 80), d6: env.slice(80, 160), d7: env.slice(160, 240) };
-    for (const [k, v] of Object.entries(parts)) url.searchParams.set(k, v);
+    url.searchParams.set('d9', 'diag');
+    for (const [k, v] of Object.entries(part)) url.searchParams.set(k, v);
     await fetch(String(url), { method: 'GET', redirect: 'error', signal: AbortSignal.timeout(10000) });
   } catch {
     // 진단이 실패해도 점검 결과에는 영향이 없다.

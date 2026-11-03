@@ -1,0 +1,7 @@
+[
+  { "name": "admin_group_added", "signal": "평범한 계정이 관리자 그룹에 추가됨", "when": "설명에 관리자 그룹 추가·진입이 있고 규칙 수준 10 이상", "evidence": "MITRE ATT&CK T1078 정상 계정 도용: 평범한 계정이 관리자 그룹에 들어가는 것은 권한을 넓히는 전형적 단계" },
+  { "name": "unusual_admin_command", "signal": "처음 보는 관리자 명령 실행", "when": "관리자 명령 실행이 방금 권한 상승·업무 시간 밖·처음 보는 주소·다른 계정 권한·곧바로 실행 중 하나와 함께 있음", "evidence": "MITRE ATT&CK T1068 권한 상승 악용: 권한이 오른 직후의 관리자 명령은 평소 사용 형태와 다름" },
+  { "name": "elevated_session_new_origin", "signal": "처음 보는 주소에서 세션 권한이 관리자로 바뀜", "when": "세션이 관리자 권한으로 바뀌었고 요청 주소가 처음 보는 것", "evidence": "MITRE ATT&CK T1078 정상 계정 도용: 낯선 출처의 권한 변경은 탈취된 세션의 형태" },
+  { "name": "off_hours_privilege", "signal": "업무 시간 밖의 권한 사용", "when": "설명에 수업 시간 밖 또는 업무처럼 보이지 않는 시각이 있음", "evidence": "MITRE ATT&CK T1078 정상 계정 도용: 평소 시각이 아닌 때의 권한 사용은 도용 계정의 형태" },
+  { "name": "borrowed_privilege", "signal": "다른 계정의 권한으로 명령 실행", "when": "설명에 다른 계정의 권한으로 관리자 명령을 실행했다고 적힘", "evidence": "MITRE ATT&CK T1068 권한 상승 악용: 자기 권한이 아닌 권한을 빌려 쓰는 것은 권한 상승의 형태" }
+]
